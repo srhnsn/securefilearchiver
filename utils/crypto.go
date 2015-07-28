@@ -9,7 +9,7 @@ import (
 )
 
 // DecryptData decrypts data using symmetric OpenSSL decryption.
-func DecryptData(ciphertext []byte, password string) (data []byte) {
+func DecryptData(ciphertext []byte, password string) []byte {
 	cmd := exec.Command(
 		"openssl",
 		"enc",
@@ -19,29 +19,13 @@ func DecryptData(ciphertext []byte, password string) (data []byte) {
 		password,
 	)
 
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	cmd.Stdin = bytes.NewReader(ciphertext)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-
-	if err != nil {
-		Error.Fatalf("OpenSSL decryption failed: %s. Stderr: %s", err, stderr.String())
-	}
-
-	if stderr.Len() != 0 {
-		Error.Fatalf("OpenSSL stderr not empty: %s", stderr.String())
-	}
-
-	return stdout.Bytes()
+	return runOpenSSLCommand(cmd, ciphertext)
 }
 
-// EncryptData encrypts data using symmetric OpenSSL decryption. It uses its
-// own salt to speed up encryption.
-func EncryptData(data []byte, password string) (ciphertext []byte) {
+// EncryptData encrypts data using symmetric OpenSSL encryption.
+func EncryptData(data []byte, password string) []byte {
+	// Use own salt to speed up encryption.
+
 	cmd := exec.Command(
 		"openssl",
 		"enc",
@@ -53,24 +37,7 @@ func EncryptData(data []byte, password string) (ciphertext []byte) {
 		password,
 	)
 
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	cmd.Stdin = bytes.NewReader(data)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-
-	if err != nil {
-		Error.Fatalf("OpenSSL encryption failed: %s. Stderr: %s", err, stderr.String())
-	}
-
-	if stderr.Len() != 0 {
-		Error.Fatalf("OpenSSL stderr not empty: %s", stderr.String())
-	}
-
-	return stdout.Bytes()
+	return runOpenSSLCommand(cmd, data)
 }
 
 func getSaltHex() string {
@@ -82,4 +49,29 @@ func getSaltHex() string {
 	}
 
 	return hex.EncodeToString(salt)
+}
+
+func runOpenSSLCommand(cmd *exec.Cmd, input []byte) []byte {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd.Stdin = bytes.NewReader(input)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+
+	if err != nil {
+		Error.Fatalf("OpenSSL error: %s. Stderr: %s", err, stderr.String())
+	}
+
+	if stderr.Len() != 0 {
+		Error.Fatalf("OpenSSL stderr not empty: %s", stderr.String())
+	}
+
+	if stdout.Len() == 0 {
+		Error.Fatalf("OpenSSL stdout empty")
+	}
+
+	return stdout.Bytes()
 }
