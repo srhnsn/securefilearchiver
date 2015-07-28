@@ -7,7 +7,7 @@ import (
 
 const jsonTimeFormat = "2006-01-02 15:04:05.999999999 -0700"
 
-// JSONTime is time.Time which its own marshaller and unmarshaller.
+// JSONTime is a time.Time with its own MarshalJSON and UnmarshalJSON implementations.
 type JSONTime struct {
 	time.Time
 }
