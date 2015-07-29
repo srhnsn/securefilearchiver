@@ -16,9 +16,6 @@ import (
 const (
 	databaseFilename        = "index.json"
 	unusedChunksDeleteBatch = "delete unused chunks.bat"
-
-	IndexZipped = 1 << iota
-	IndexEncrypted
 )
 
 type chunkIndexMap map[string]bool

@@ -63,7 +63,7 @@ func getRestoreFilesCommands(inputDir string, outputDir string, doc *models.Docu
 			continue
 		}
 
-		noFiles += 1
+		noFiles++
 		cmds := getRestoreFileCommands(inputDir, outputDir, shortPath, file)
 		out = append(out, cmds...)
 		out = append(out, "")
