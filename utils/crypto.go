@@ -5,8 +5,13 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"io"
+	"os"
 	"os/exec"
 )
+
+// PasswordEnv is the environment variable that is used for password
+// storage for OpenSSL.
+const PasswordEnv = "SFA_PASSWORD"
 
 // DecryptData decrypts data using symmetric OpenSSL decryption.
 func DecryptData(ciphertext []byte, password string) []byte {
@@ -20,6 +25,28 @@ func DecryptData(ciphertext []byte, password string) []byte {
 	)
 
 	return runOpenSSLCommand(cmd, ciphertext)
+}
+
+// DecryptDataEnvPassword decrypts data using symmetric OpenSSL decryption.
+// It uses environment variables for passing the password.
+func DecryptDataEnvPassword(data []byte, password string) []byte {
+	openSSLPassword := "env:" + PasswordEnv
+
+	err := os.Setenv(PasswordEnv, password)
+
+	if err != nil {
+		Error.Fatalln(err)
+	}
+
+	result := DecryptData(data, openSSLPassword)
+
+	err = os.Setenv(PasswordEnv, "")
+
+	if err != nil {
+		Error.Fatalln(err)
+	}
+
+	return result
 }
 
 // EncryptData encrypts data using symmetric OpenSSL encryption.
@@ -40,15 +67,46 @@ func EncryptData(data []byte, password string) []byte {
 	return runOpenSSLCommand(cmd, data)
 }
 
-func getSaltHex() string {
-	salt := make([]byte, 8)
-	_, err := io.ReadFull(rand.Reader, salt)
+// EncryptDataEnvPassword encrypts data using symmetric OpenSSL encryption.
+// It uses environment variables for passing the password.
+func EncryptDataEnvPassword(data []byte, password string) []byte {
+	openSSLPassword := "env:" + PasswordEnv
+
+	err := os.Setenv(PasswordEnv, password)
 
 	if err != nil {
 		Error.Fatalln(err)
 	}
 
-	return hex.EncodeToString(salt)
+	result := EncryptData(data, openSSLPassword)
+
+	err = os.Setenv(PasswordEnv, "")
+
+	if err != nil {
+		Error.Fatalln(err)
+	}
+
+	return result
+}
+
+// GetNewOpenSSLKey returns 32 random bytes, encoded as a 64 byte hex string.
+func GetNewOpenSSLKey() string {
+	return getRandomHexBytes(32)
+}
+
+func getRandomHexBytes(length int) string {
+	data := make([]byte, length)
+	_, err := io.ReadFull(rand.Reader, data)
+
+	if err != nil {
+		Error.Fatalln(err)
+	}
+
+	return hex.EncodeToString(data)
+}
+
+func getSaltHex() string {
+	return getRandomHexBytes(8)
 }
 
 func runOpenSSLCommand(cmd *exec.Cmd, input []byte) []byte {

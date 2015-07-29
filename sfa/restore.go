@@ -84,7 +84,12 @@ func restoreFiles(inputDir string, outputDir string) {
 		utils.Info.Printf("using restore pattern %s", *restorePattern)
 	}
 
-	out := []string{"@echo off", ""}
+	out := []string{
+		"@echo off",
+		"",
+		"set " + utils.PasswordEnv + "=" + doc.KeyUnencrypted,
+		"",
+	}
 
 	restoreCommands, noFiles := getRestoreFilesCommands(inputDir, outputDir, doc)
 	out = append(out, restoreCommands...)
@@ -95,6 +100,7 @@ func restoreFiles(inputDir string, outputDir string) {
 		utils.Info.Printf("restored %d out of %d files", noFiles, len(doc.Files))
 	}
 
+	out = append(out, "set "+utils.PasswordEnv+"=")
 	out = append(out, "pause")
 	err = os.MkdirAll(outputDir, 0700)
 
@@ -118,8 +124,8 @@ func restoreSingleChunk(inputDir string, destDir string, filename string, file m
 	chunkDest := filepath.Join(destDir, filename)
 
 	cmd := fmt.Sprintf(
-		`openssl enc -aes-256-cbc -d -pass "%s" -in "%s" -out "%s"`,
-		getPassword(),
+		`openssl enc -aes-256-cbc -d -pass env:%s -in "%s" -out "%s"`,
+		utils.PasswordEnv,
 		chunkSource,
 		chunkDest,
 	)
@@ -141,8 +147,8 @@ func restoreMultipleChunks(inputDir string, destDir string, filename string, fil
 		chunkDest := filepath.Join(destDir, fmt.Sprintf("%s.%d", filename, chunkNo+1))
 
 		cmd := fmt.Sprintf(
-			`openssl enc -aes-256-cbc -d -pass "%s" -in "%s" -out "%s"`,
-			getPassword(),
+			`openssl enc -aes-256-cbc -d -pass env:%s -in "%s" -out "%s"`,
+			utils.PasswordEnv,
 			chunkSource,
 			chunkDest,
 		)

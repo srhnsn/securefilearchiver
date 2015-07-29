@@ -53,6 +53,9 @@ you do not trust (i. e. Dropbox and the like).
            The SHA-1 checksums are also used for deduplication.
         1. Chunk order
 
+Your files are encrypted with a generated 256 bit key. This key is encrypted with your own
+key and stored in the index file. The index file is, again, encrypted with your key.
+
 ## Restoring files
 
 SFA does not do any restoration itself. Instead, it generates batch files which only use

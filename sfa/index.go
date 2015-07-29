@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -44,6 +45,21 @@ func createUnusedChunksDeleteBatch(files []string, directory string) {
 	}
 }
 
+func decryptIndexKey(doc *models.Document, password string) {
+	data, err := hex.DecodeString(doc.KeyEncrypted)
+
+	if err != nil {
+		utils.Error.Fatalln(err)
+	}
+
+	doc.KeyUnencrypted = string(utils.DecryptData(data, password))
+}
+
+func encryptIndexKey(doc *models.Document, password string) {
+	key := utils.EncryptData([]byte(doc.KeyUnencrypted), password)
+	doc.KeyEncrypted = hex.EncodeToString(key)
+}
+
 func getChunkIndexMap(doc *models.Document) chunkIndexMap {
 	chunkIndex := chunkIndexMap{}
 
@@ -62,6 +78,16 @@ func getChunkIndexMap(doc *models.Document) chunkIndexMap {
 	}
 
 	return chunkIndex
+}
+
+func getNewDocument() *models.Document {
+	keyUnencrypted := utils.GetNewOpenSSLKey()
+
+	return &models.Document{
+		KeyUnencrypted: keyUnencrypted,
+		Files:          map[string]models.File{},
+		DeletedFiles:   map[string][]models.File{},
+	}
 }
 
 func getUnusedChunks(chunkIndex chunkIndexMap, directory string) []string {
@@ -122,16 +148,17 @@ func readIndex(filename string) (*models.Document, error) {
 	if !utils.FileExists(filename) {
 		utils.Info.Printf("no index found at %s, creating new archive\n", filename)
 
-		return &models.Document{
-			Files:        map[string]models.File{},
-			DeletedFiles: map[string][]models.File{},
-		}, nil
+		return getNewDocument(), nil
 	}
 
 	data, err := ioutil.ReadFile(filename)
 
 	if err != nil {
 		return nil, err
+	}
+
+	if !*plainIndex {
+		data = utils.DecryptData(data, getPassword())
 	}
 
 	var document models.Document
@@ -142,14 +169,21 @@ func readIndex(filename string) (*models.Document, error) {
 		return nil, err
 	}
 
+	decryptIndexKey(&document, getPassword())
+
 	return &document, nil
 }
 
 func saveIndex(filename string, doc *models.Document) {
+	encryptIndexKey(doc, getPassword())
 	data, err := json.MarshalIndent(doc, "", "\t")
 
 	if err != nil {
 		utils.Error.Fatalln(err)
+	}
+
+	if !*plainIndex {
+		data = utils.EncryptData(data, getPassword())
 	}
 
 	tempFilename := filename + ".tmp"
@@ -167,6 +201,7 @@ func saveIndex(filename string, doc *models.Document) {
 	}
 
 	// Ignore the error. Remove line when Go 1.5 arrives.
+	// See https://github.com/golang/go/issues/8914#issuecomment-99570437
 	// See https://github.com/golang/go/issues/8914#issuecomment-99570437
 	os.Remove(filename)
 	err = os.Rename(tempFilename, filename)
