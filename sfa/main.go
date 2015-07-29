@@ -2,20 +2,27 @@ package main
 
 import (
 	"os"
-	"path/filepath"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/srhnsn/securefilearchiver/utils"
 )
 
-// EncSuffix is the suffix for all encrypted (binary) files.
-const EncSuffix = ".bin"
+const (
+	// EncSuffix is the suffix for all encrypted (binary) files.
+	EncSuffix = ".bin"
+	// TmpSuffix is the suffix for all temporary files.
+	TmpSuffix = ".tmp"
+
+	// ZipSuffix is the suffix for all compressed files.
+	ZipSuffix = ".gz"
+)
 
 var (
 	app        = kingpin.New("sfa", "A secure file archiver.")
 	verbose    = app.Flag("verbose", "Verbose output.").Short('v').Bool()
-	plainIndex = app.Flag("plainindex", "Do not encrypt index file.").Bool()
+	noIndexEnc = app.Flag("noindexenc", "Do not encrypt index file.").Bool()
+	noIndexZip = app.Flag("noindexzip", "Do not compress index file.").Bool()
 	password   = app.Flag("pass", "Pass phrase argument that is passed as-is to OpenSSL's -pass.").String()
 
 	archive          = app.Command("archive", "Archive files.")
@@ -46,14 +53,4 @@ func main() {
 
 		restoreFiles(input, output)
 	}
-}
-
-func getDatabaseFilename(directory string, plainIndex bool) string {
-	filename := filepath.Join(directory, databaseFilename)
-
-	if !plainIndex {
-		filename += EncSuffix
-	}
-
-	return filename
 }

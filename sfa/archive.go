@@ -202,7 +202,7 @@ func saveFile(outputDir string, filename string, data []byte) error {
 
 func walkDirectory(inputDir string, outputDir string) {
 	utils.Trace.Println("reading index")
-	doc, err := readIndex(getDatabaseFilename(outputDir, *plainIndex))
+	doc, err := readIndex(getExistingIndexFilename(outputDir))
 
 	if err != nil {
 		utils.Error.Fatalln(err)
@@ -229,7 +229,7 @@ func walkDirectory(inputDir string, outputDir string) {
 	}
 
 	utils.Trace.Println("writing to index")
-	saveIndex(getDatabaseFilename(outputDir, *plainIndex), doc)
+	saveIndex(getIndexFilename(outputDir), doc)
 }
 
 func walkDirectoryFn(inputDir string, outputDir string, doc *models.Document, removedPaths removedPathsMap) filepath.WalkFunc {

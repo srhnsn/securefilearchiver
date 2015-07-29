@@ -13,8 +13,13 @@ import (
 	"github.com/srhnsn/securefilearchiver/utils"
 )
 
-const databaseFilename = "index.json"
-const unusedChunksDeleteBatch = "delete unused chunks.bat"
+const (
+	databaseFilename        = "index.json"
+	unusedChunksDeleteBatch = "delete unused chunks.bat"
+
+	IndexZipped = 1 << iota
+	IndexEncrypted
+)
 
 type chunkIndexMap map[string]bool
 type removedPathsMap map[string]bool
@@ -78,6 +83,42 @@ func getChunkIndexMap(doc *models.Document) chunkIndexMap {
 	}
 
 	return chunkIndex
+}
+
+func getExistingIndexFilename(directory string) string {
+	base := filepath.Join(directory, databaseFilename)
+
+	if utils.FileExists(base) {
+		return base
+	}
+
+	if utils.FileExists(base + ZipSuffix) {
+		return base + ZipSuffix
+	}
+
+	if utils.FileExists(base + EncSuffix) {
+		return base + EncSuffix
+	}
+
+	if utils.FileExists(base + ZipSuffix + EncSuffix) {
+		return base + ZipSuffix + EncSuffix
+	}
+
+	return getIndexFilename(directory)
+}
+
+func getIndexFilename(directory string) string {
+	filename := filepath.Join(directory, databaseFilename)
+
+	if !*noIndexZip {
+		filename += ZipSuffix
+	}
+
+	if !*noIndexEnc {
+		filename += EncSuffix
+	}
+
+	return filename
 }
 
 func getNewDocument() *models.Document {
@@ -157,9 +198,7 @@ func readIndex(filename string) (*models.Document, error) {
 		return nil, err
 	}
 
-	if !*plainIndex {
-		data = utils.DecryptData(data, getPassword())
-	}
+	data = unpackIndex(data, filename)
 
 	var document models.Document
 
@@ -182,11 +221,15 @@ func saveIndex(filename string, doc *models.Document) {
 		utils.Error.Fatalln(err)
 	}
 
-	if !*plainIndex {
+	if !*noIndexZip {
+		data = utils.CompressData(data)
+	}
+
+	if !*noIndexEnc {
 		data = utils.EncryptData(data, getPassword())
 	}
 
-	tempFilename := filename + ".tmp"
+	tempFilename := filename + TmpSuffix
 	err = ioutil.WriteFile(tempFilename, data, 0700)
 
 	if err != nil {
@@ -209,6 +252,25 @@ func saveIndex(filename string, doc *models.Document) {
 	if err != nil {
 		utils.Error.Fatalln(err)
 	}
+}
+
+func unpackIndex(data []byte, filename string) []byte {
+	if strings.HasSuffix(filename, TmpSuffix) {
+		// Strip TmpSuffix
+		filename = filename[:len(filename)-len(TmpSuffix)]
+	}
+
+	if strings.HasSuffix(filename, EncSuffix) {
+		// Strip EncSuffix and decrypt
+		filename = filename[:len(filename)-len(EncSuffix)]
+		data = utils.DecryptData(data, getPassword())
+	}
+
+	if strings.HasSuffix(filename, ZipSuffix) {
+		data = utils.UncompressData(data)
+	}
+
+	return data
 }
 
 func validateIndex(filename string, oldDoc *models.Document) error {
