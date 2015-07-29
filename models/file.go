@@ -5,6 +5,7 @@ type File struct {
 	ModificationTime JSONTime `json:"m"`
 	Size             uint64   `json:"s"`
 	DeletedAt        JSONTime `json:"d"`
+	IsDirectory      bool     `json:"i,omitempty"`
 
 	Chunks []Chunk `json:"c"`
 }

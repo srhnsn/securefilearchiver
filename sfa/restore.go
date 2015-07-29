@@ -18,6 +18,10 @@ const outputScriptfile = "restore.bat"
 const mtimeFormat = "2006-01-02 15:04:05.999999999 -0700"
 
 func getRestoreFileCommands(inputDir string, outputDir string, shortPath string, file models.File) []string {
+	if file.IsDirectory {
+		return getRestoreFileCommandsDirectory(inputDir, outputDir, shortPath, file)
+	}
+
 	out := []string{}
 
 	destDir := filepath.Join(outputDir, filepath.Dir(shortPath))
@@ -34,6 +38,17 @@ func getRestoreFileCommands(inputDir string, outputDir string, shortPath string,
 
 	out = append(out, chunkCmds...)
 	out = append(out, getTouchCmd(filepath.Join(destDir, filename), file.ModificationTime.Time))
+
+	return out
+}
+
+func getRestoreFileCommandsDirectory(inputDir string, outputDir string, shortPath string, file models.File) []string {
+	out := []string{}
+
+	destDir := filepath.Join(outputDir, shortPath)
+
+	out = append(out, getMkDirCmd(destDir))
+	out = append(out, getTouchCmd(destDir, file.ModificationTime.Time))
 
 	return out
 }

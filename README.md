@@ -97,9 +97,8 @@ neither should you.
 
 # To do
 
-1. Empty directories should be archived.
-1. Modification times of directories should be archived.
-1. Tests.
+1. Index status viewer.
 1. Old snapshots should be pruned at some point.
+1. Tests.
 1. A way to determine good chunk sizes should be found. Current threshold is fixed at 1 MiB.
 1. Actual Linux support.

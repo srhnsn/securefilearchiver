@@ -51,11 +51,17 @@ func archiveFile(archive *ArchiveInfo) error {
 		return err
 	}
 
-	archive.Document.Files[archive.ShortPath] = models.File{
+	file := models.File{
 		Size:             archive.FileSize,
 		ModificationTime: models.JSONTime{Time: archive.FileInfo.ModTime()},
 		Chunks:           chunks,
 	}
+
+	if archive.FileInfo.IsDir() {
+		file.IsDirectory = true
+	}
+
+	archive.Document.Files[archive.ShortPath] = file
 
 	return nil
 }
@@ -66,6 +72,10 @@ func chunkExists(chunkName string, archive *ArchiveInfo) bool {
 }
 
 func createAndGetChunks(archive *ArchiveInfo) ([]models.Chunk, error) {
+	if archive.FileInfo.IsDir() {
+		return []models.Chunk{}, nil
+	}
+
 	file, err := os.Open(archive.FullPath)
 
 	if err != nil {
@@ -211,16 +221,16 @@ func walkDirectory(inputDir string, outputDir string) {
 			return nil
 		}
 
-		if fileInfo.IsDir() {
-			// Do not walk the output directory.
-			if strings.HasPrefix(fullPath, outputDir) {
-				return filepath.SkipDir
-			}
-
-			return nil
+		// Do not walk output directory.
+		if fileInfo.IsDir() && strings.HasPrefix(fullPath, outputDir) {
+			return filepath.SkipDir
 		}
 
-		shortPath := fullPath[inputDirLength:]
+		var shortPath string
+
+		if len(fullPath) >= inputDirLength {
+			shortPath = fullPath[inputDirLength:]
+		}
 
 		file, exists := doc.Files[shortPath]
 
@@ -237,6 +247,13 @@ func walkDirectory(inputDir string, outputDir string) {
 
 		if exists {
 			delete(removedPaths, shortPath)
+
+			// Fast path for directories.
+			if fileInfo.IsDir() {
+				file.ModificationTime = models.JSONTime{Time: fileInfo.ModTime()}
+				doc.Files[shortPath] = file
+				return nil
+			}
 
 			if !fileHasChanged(&archive) {
 				return nil
