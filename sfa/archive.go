@@ -14,6 +14,10 @@ import (
 	"github.com/srhnsn/securefilearchiver/utils"
 )
 
+const (
+	progressUpdateInterval = 5 * time.Second
+)
+
 // ArchiveInfo is a struct which holds all needed information for archiving
 // a specific file. It is merely a convenience struct for passing in functions.
 type ArchiveInfo struct {
@@ -211,10 +215,20 @@ func walkDirectory(inputDir string, outputDir string) {
 	utils.Trace.Println("creating removed paths map")
 	removedPaths := getRemovedPathsMap(doc)
 
-	walkFn := walkDirectoryFn(inputDir, outputDir, doc, removedPaths)
+	var (
+		currentFile    string
+		processedFiles uint64
+		processedData  uint64
+	)
+
+	done := make(chan bool)
+
+	startProgressUpdater(&currentFile, &processedFiles, &processedData, done)
+	walkFn := walkDirectoryFn(inputDir, outputDir, doc, removedPaths, &currentFile, &processedFiles, &processedData)
 
 	utils.Trace.Println("checking for changed files")
 	filepath.Walk(inputDir, walkFn)
+	done <- true
 
 	utils.Trace.Println("checking for deleted files")
 	markRemovedPaths(removedPaths, doc)
@@ -232,7 +246,16 @@ func walkDirectory(inputDir string, outputDir string) {
 	saveIndex(getIndexFilename(outputDir), doc)
 }
 
-func walkDirectoryFn(inputDir string, outputDir string, doc *models.Document, removedPaths removedPathsMap) filepath.WalkFunc {
+func walkDirectoryFn(
+	inputDir string,
+	outputDir string,
+	doc *models.Document,
+	removedPaths removedPathsMap,
+	currentFile *string,
+	processedFiles *uint64,
+	processedData *uint64,
+) filepath.WalkFunc {
+
 	inputDirLength := len(inputDir) + 1
 
 	return func(fullPath string, fileInfo os.FileInfo, err error) error {
@@ -253,6 +276,8 @@ func walkDirectoryFn(inputDir string, outputDir string, doc *models.Document, re
 		if len(fullPath) >= inputDirLength {
 			shortPath = fullPath[inputDirLength:]
 		}
+
+		*currentFile = shortPath
 
 		file, exists := doc.Files[shortPath]
 
@@ -299,6 +324,44 @@ func walkDirectoryFn(inputDir string, outputDir string, doc *models.Document, re
 			}
 		}
 
+		*processedFiles++
+
+		if !fileInfo.IsDir() {
+			*processedData += archive.FileSize
+		}
+
 		return nil
 	}
+}
+
+func printProgress(currentFile string, processedFiles uint64, processedData uint64, time time.Duration) {
+	size := utils.FormatFileSize(processedData)
+
+	utils.Info.Printf(
+		"Processed %d files and %s in %v, currently: %s",
+		processedFiles,
+		size,
+		time,
+		currentFile,
+	)
+}
+
+func startProgressUpdater(currentFile *string, processedFiles *uint64, processedData *uint64, done chan bool) {
+	go func() {
+		start := time.Now()
+		ticker := time.NewTicker(progressUpdateInterval)
+
+		for {
+			select {
+			case <-ticker.C:
+				d := time.Now().Sub(start)
+				d = time.Duration(d.Seconds()) * time.Second
+
+				printProgress(*currentFile, *processedFiles, *processedData, d)
+			case <-done:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 }
