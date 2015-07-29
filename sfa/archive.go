@@ -38,6 +38,7 @@ type ProgressInfo struct {
 	CurrentFile    string
 	ProcessedData  uint64
 	ProcessedFiles uint64
+	SkippedFiles   uint64
 }
 
 func addToDeletedFiles(archive *ArchiveInfo) {
@@ -313,6 +314,7 @@ func walkDirectoryFn(
 			}
 
 			if !fileHasChanged(&archive) {
+				progressInfo.SkippedFiles++
 				return nil
 			}
 
@@ -354,11 +356,17 @@ func walkDirectoryFn(
 func printProgress(progressInfo *ProgressInfo, time time.Duration) {
 	size := utils.FormatFileSize(progressInfo.ProcessedData)
 
-	utils.Info.Printf(
-		"Processed %d files and %s in %s, currently: %s",
+	utils.Info.Printf(`Archive process started %s ago.
+Skipped files:   %d
+Processed files: %d
+Processed data:  %s
+Current file:    %s
+
+`,
+		time,
+		progressInfo.SkippedFiles,
 		progressInfo.ProcessedFiles,
 		size,
-		time,
 		progressInfo.CurrentFile,
 	)
 }
