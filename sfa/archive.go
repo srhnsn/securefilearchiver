@@ -16,6 +16,7 @@ import (
 
 const (
 	progressUpdateInterval = 5 * time.Second
+	saveIndexThreshold     = 1024 * 1024 * 1024
 )
 
 // ArchiveInfo is a struct which holds all needed information for archiving
@@ -265,6 +266,7 @@ func walkDirectoryFn(
 ) filepath.WalkFunc {
 
 	inputDirLength := len(inputDir) + 1
+	var lastIndexSaveAt uint64
 
 	return func(fullPath string, fileInfo os.FileInfo, err error) error {
 		fullPath = utils.FixSlashes(fullPath)
@@ -336,6 +338,13 @@ func walkDirectoryFn(
 
 		if !fileInfo.IsDir() {
 			progressInfo.ProcessedData += archive.FileSize
+		}
+
+		if progressInfo.ProcessedData-lastIndexSaveAt > saveIndexThreshold {
+			utils.Info.Println("doing intermediary index save")
+			lastIndexSaveAt = progressInfo.ProcessedData
+			saveIndex(getIndexFilename(outputDir), doc)
+			utils.Info.Println("continuing archive process")
 		}
 
 		return nil
