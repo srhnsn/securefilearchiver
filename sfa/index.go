@@ -240,10 +240,6 @@ func saveIndex(filename string, doc *models.Document) {
 		utils.Error.Panicln(err)
 	}
 
-	// Ignore the error. Remove line when Go 1.5 arrives.
-	// See https://github.com/golang/go/issues/8914#issuecomment-99570437
-	// See https://github.com/golang/go/issues/8914#issuecomment-99570437
-	os.Remove(filename)
 	err = os.Rename(tempFilename, filename)
 
 	if err != nil {
