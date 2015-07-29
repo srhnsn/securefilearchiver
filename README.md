@@ -16,7 +16,8 @@ you do not trust (i. e. Dropbox and the like).
     Flags:
       --help         Show help (also see --help-long and --help-man).
       -v, --verbose  Verbose output.
-      --plainindex   Do not encrypt index file.
+      --noindexenc   Do not encrypt index file.
+      --noindexzip   Do not compress index file.
       --pass=PASS    Pass phrase argument that is passed as-is to OpenSSL's -pass.
 
     Commands:
