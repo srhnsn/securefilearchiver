@@ -17,6 +17,7 @@ func FixSlashes(input string) string {
 	return strings.Replace(input, "\\", "/", -1)
 }
 
+// FormatFileSize converts file sizes in human-readable formats.
 func FormatFileSize(bytes uint64) string {
 	if bytes < 1024 {
 		return fmt.Sprintf("%d B", bytes)

@@ -31,6 +31,14 @@ type ArchiveInfo struct {
 	ShortPath string
 }
 
+// ProgressInfo holds all information that describes the current status
+// when archiving files.
+type ProgressInfo struct {
+	CurrentFile    string
+	ProcessedData  uint64
+	ProcessedFiles uint64
+}
+
 func addToDeletedFiles(archive *ArchiveInfo) {
 	archive.File.DeletedAt = models.JSONTime{Time: time.Now()}
 	delete(archive.Document.Files, archive.ShortPath)
@@ -223,16 +231,10 @@ func walkDirectory(inputDir string, outputDir string) {
 	utils.Trace.Println("creating removed paths map")
 	removedPaths := getRemovedPathsMap(doc)
 
-	var (
-		currentFile    string
-		processedFiles uint64
-		processedData  uint64
-	)
-
+	var progressInfo ProgressInfo
 	done := make(chan bool)
-
-	startProgressUpdater(&currentFile, &processedFiles, &processedData, done)
-	walkFn := walkDirectoryFn(inputDir, outputDir, doc, removedPaths, &currentFile, &processedFiles, &processedData)
+	startProgressUpdater(&progressInfo, done)
+	walkFn := walkDirectoryFn(inputDir, outputDir, doc, removedPaths, &progressInfo)
 
 	utils.Trace.Println("checking for changed files")
 	filepath.Walk(inputDir, walkFn)
@@ -259,9 +261,7 @@ func walkDirectoryFn(
 	outputDir string,
 	doc *models.Document,
 	removedPaths removedPathsMap,
-	currentFile *string,
-	processedFiles *uint64,
-	processedData *uint64,
+	progressInfo *ProgressInfo,
 ) filepath.WalkFunc {
 
 	inputDirLength := len(inputDir) + 1
@@ -285,7 +285,7 @@ func walkDirectoryFn(
 			shortPath = fullPath[inputDirLength:]
 		}
 
-		*currentFile = shortPath
+		progressInfo.CurrentFile = shortPath
 
 		file, exists := doc.Files[shortPath]
 
@@ -332,29 +332,29 @@ func walkDirectoryFn(
 			}
 		}
 
-		*processedFiles++
+		progressInfo.ProcessedFiles++
 
 		if !fileInfo.IsDir() {
-			*processedData += archive.FileSize
+			progressInfo.ProcessedData += archive.FileSize
 		}
 
 		return nil
 	}
 }
 
-func printProgress(currentFile string, processedFiles uint64, processedData uint64, time time.Duration) {
-	size := utils.FormatFileSize(processedData)
+func printProgress(progressInfo *ProgressInfo, time time.Duration) {
+	size := utils.FormatFileSize(progressInfo.ProcessedData)
 
 	utils.Info.Printf(
-		"Processed %d files and %s in %v, currently: %s",
-		processedFiles,
+		"Processed %d files and %s in %s, currently: %s",
+		progressInfo.ProcessedFiles,
 		size,
 		time,
-		currentFile,
+		progressInfo.CurrentFile,
 	)
 }
 
-func startProgressUpdater(currentFile *string, processedFiles *uint64, processedData *uint64, done chan bool) {
+func startProgressUpdater(progressInfo *ProgressInfo, done chan bool) {
 	go func() {
 		start := time.Now()
 		ticker := time.NewTicker(progressUpdateInterval)
@@ -365,7 +365,7 @@ func startProgressUpdater(currentFile *string, processedFiles *uint64, processed
 				d := time.Now().Sub(start)
 				d = time.Duration(d.Seconds()) * time.Second
 
-				printProgress(*currentFile, *processedFiles, *processedData, d)
+				printProgress(progressInfo, d)
 			case <-done:
 				ticker.Stop()
 				return
