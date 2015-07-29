@@ -17,6 +17,27 @@ import (
 const outputScriptfile = "restore.bat"
 const mtimeFormat = "2006-01-02 15:04:05.999999999 -0700"
 
+func getRestoreFileCommands(inputDir string, outputDir string, shortPath string, file models.File) []string {
+	out := []string{}
+
+	destDir := filepath.Join(outputDir, filepath.Dir(shortPath))
+	filename := filepath.Base(shortPath)
+
+	out = append(out, getMkDirCmd(destDir))
+	var chunkCmds []string
+
+	if len(file.Chunks) == 1 {
+		chunkCmds = restoreSingleChunk(inputDir, destDir, filename, file)
+	} else {
+		chunkCmds = restoreMultipleChunks(inputDir, destDir, filename, file)
+	}
+
+	out = append(out, chunkCmds...)
+	out = append(out, getTouchCmd(filepath.Join(destDir, filename), file.ModificationTime.Time))
+
+	return out
+}
+
 func getRestoreFilesCommands(inputDir string, outputDir string, doc *models.Document) ([]string, uint64) {
 	out := []string{}
 
@@ -28,21 +49,8 @@ func getRestoreFilesCommands(inputDir string, outputDir string, doc *models.Docu
 		}
 
 		noFiles += 1
-
-		destDir := filepath.Join(outputDir, filepath.Dir(shortPath))
-		filename := filepath.Base(shortPath)
-
-		out = append(out, getMkDirCmd(destDir))
-		var chunkCmds []string
-
-		if len(file.Chunks) == 1 {
-			chunkCmds = restoreSingleChunk(inputDir, destDir, filename, file)
-		} else {
-			chunkCmds = restoreMultipleChunks(inputDir, destDir, filename, file)
-		}
-
-		out = append(out, chunkCmds...)
-		out = append(out, getTouchCmd(filepath.Join(destDir, filename), file.ModificationTime.Time))
+		cmds := getRestoreFileCommands(inputDir, outputDir, shortPath, file)
+		out = append(out, cmds...)
 		out = append(out, "")
 	}
 
