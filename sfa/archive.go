@@ -211,9 +211,31 @@ func walkDirectory(inputDir string, outputDir string) {
 	utils.Trace.Println("creating removed paths map")
 	removedPaths := getRemovedPathsMap(doc)
 
+	walkFn := walkDirectoryFn(inputDir, outputDir, doc, removedPaths)
+
+	utils.Trace.Println("checking for changed files")
+	filepath.Walk(inputDir, walkFn)
+
+	utils.Trace.Println("checking for deleted files")
+	markRemovedPaths(removedPaths, doc)
+
+	utils.Trace.Println("checking for unused chunks")
+	chunkIndex := getChunkIndexMap(doc)
+	unusedChunks := getUnusedChunks(chunkIndex, outputDir)
+	createUnusedChunksDeleteBatch(unusedChunks, outputDir)
+
+	if len(unusedChunks) > 0 {
+		utils.Info.Printf("found %d unused chunks", len(unusedChunks))
+	}
+
+	utils.Trace.Println("writing to index")
+	saveIndex(getDatabaseFilename(outputDir, *plainIndex), doc)
+}
+
+func walkDirectoryFn(inputDir string, outputDir string, doc *models.Document, removedPaths removedPathsMap) filepath.WalkFunc {
 	inputDirLength := len(inputDir) + 1
 
-	walkFn := func(fullPath string, fileInfo os.FileInfo, err error) error {
+	return func(fullPath string, fileInfo os.FileInfo, err error) error {
 		fullPath = utils.FixSlashes(fullPath)
 
 		if err != nil {
@@ -279,22 +301,4 @@ func walkDirectory(inputDir string, outputDir string) {
 
 		return nil
 	}
-
-	utils.Trace.Println("checking for changed files")
-	filepath.Walk(inputDir, walkFn)
-
-	utils.Trace.Println("checking for deleted files")
-	markRemovedPaths(removedPaths, doc)
-
-	utils.Trace.Println("checking for unused chunks")
-	chunkIndex := getChunkIndexMap(doc)
-	unusedChunks := getUnusedChunks(chunkIndex, outputDir)
-	createUnusedChunksDeleteBatch(unusedChunks, outputDir)
-
-	if len(unusedChunks) > 0 {
-		utils.Info.Printf("found %d unused chunks", len(unusedChunks))
-	}
-
-	utils.Trace.Println("writing to index")
-	saveIndex(getDatabaseFilename(outputDir, *plainIndex), doc)
 }
