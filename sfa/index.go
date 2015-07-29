@@ -46,7 +46,7 @@ func createUnusedChunksDeleteBatch(files []string, directory string) {
 	err := ioutil.WriteFile(batchPath, data, 0700)
 
 	if err != nil {
-		utils.Error.Fatalln(err)
+		utils.Error.Panicln(err)
 	}
 }
 
@@ -54,7 +54,7 @@ func decryptIndexKey(doc *models.Document, password string) {
 	data, err := hex.DecodeString(doc.KeyEncrypted)
 
 	if err != nil {
-		utils.Error.Fatalln(err)
+		utils.Error.Panicln(err)
 	}
 
 	doc.KeyUnencrypted = string(utils.DecryptData(data, password))
@@ -162,7 +162,7 @@ func getUnusedChunks(chunkIndex chunkIndexMap, directory string) []string {
 		relativePath, err := filepath.Rel(directory, fullPath)
 
 		if err != nil {
-			utils.Error.Fatalln(err)
+			utils.Error.Panicln(err)
 		}
 
 		unusedChunks = append(unusedChunks, relativePath)
@@ -218,7 +218,7 @@ func saveIndex(filename string, doc *models.Document) {
 	data, err := json.MarshalIndent(doc, "", "\t")
 
 	if err != nil {
-		utils.Error.Fatalln(err)
+		utils.Error.Panicln(err)
 	}
 
 	if !*noIndexZip {
@@ -233,14 +233,14 @@ func saveIndex(filename string, doc *models.Document) {
 	err = ioutil.WriteFile(tempFilename, data, 0700)
 
 	if err != nil {
-		utils.Error.Fatalln(err)
+		utils.Error.Panicln(err)
 	}
 
 	utils.Trace.Println("validating index")
 	err = validateIndex(tempFilename, doc)
 
 	if err != nil {
-		utils.Error.Fatalln(err)
+		utils.Error.Panicln(err)
 	}
 
 	// Ignore the error. Remove line when Go 1.5 arrives.
@@ -250,7 +250,7 @@ func saveIndex(filename string, doc *models.Document) {
 	err = os.Rename(tempFilename, filename)
 
 	if err != nil {
-		utils.Error.Fatalln(err)
+		utils.Error.Panicln(err)
 	}
 }
 

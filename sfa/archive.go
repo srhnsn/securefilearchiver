@@ -177,7 +177,7 @@ func normalizePath(path string) string {
 	path, err := filepath.Abs(path)
 
 	if err != nil {
-		utils.Error.Fatalln(err)
+		utils.Error.Panicln(err)
 	}
 
 	path = filepath.Clean(path)
@@ -205,7 +205,7 @@ func walkDirectory(inputDir string, outputDir string) {
 	doc, err := readIndex(getExistingIndexFilename(outputDir))
 
 	if err != nil {
-		utils.Error.Fatalln(err)
+		utils.Error.Panicln(err)
 	}
 
 	utils.Trace.Println("creating removed paths map")

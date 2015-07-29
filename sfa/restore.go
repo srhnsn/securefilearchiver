@@ -77,7 +77,7 @@ func restoreFiles(inputDir string, outputDir string) {
 	doc, err := readIndex(getExistingIndexFilename(inputDir))
 
 	if err != nil {
-		utils.Error.Fatalln(err)
+		utils.Error.Panicln(err)
 	}
 
 	if len(*restorePattern) != 0 {
@@ -105,14 +105,14 @@ func restoreFiles(inputDir string, outputDir string) {
 	err = os.MkdirAll(outputDir, 0700)
 
 	if err != nil {
-		utils.Error.Fatalln(err)
+		utils.Error.Panicln(err)
 	}
 
 	data := []byte(strings.Join(out, "\r\n"))
 	err = ioutil.WriteFile(filepath.Join(outputDir, outputScriptfile), data, 0700)
 
 	if err != nil {
-		utils.Error.Fatalln(err)
+		utils.Error.Panicln(err)
 	}
 }
 

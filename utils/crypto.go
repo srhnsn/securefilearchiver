@@ -35,7 +35,7 @@ func DecryptDataEnvPassword(data []byte, password string) []byte {
 	err := os.Setenv(PasswordEnv, password)
 
 	if err != nil {
-		Error.Fatalln(err)
+		Error.Panicln(err)
 	}
 
 	result := DecryptData(data, openSSLPassword)
@@ -43,7 +43,7 @@ func DecryptDataEnvPassword(data []byte, password string) []byte {
 	err = os.Setenv(PasswordEnv, "")
 
 	if err != nil {
-		Error.Fatalln(err)
+		Error.Panicln(err)
 	}
 
 	return result
@@ -75,7 +75,7 @@ func EncryptDataEnvPassword(data []byte, password string) []byte {
 	err := os.Setenv(PasswordEnv, password)
 
 	if err != nil {
-		Error.Fatalln(err)
+		Error.Panicln(err)
 	}
 
 	result := EncryptData(data, openSSLPassword)
@@ -83,7 +83,7 @@ func EncryptDataEnvPassword(data []byte, password string) []byte {
 	err = os.Setenv(PasswordEnv, "")
 
 	if err != nil {
-		Error.Fatalln(err)
+		Error.Panicln(err)
 	}
 
 	return result
@@ -99,7 +99,7 @@ func getRandomHexBytes(length int) string {
 	_, err := io.ReadFull(rand.Reader, data)
 
 	if err != nil {
-		Error.Fatalln(err)
+		Error.Panicln(err)
 	}
 
 	return hex.EncodeToString(data)
@@ -120,15 +120,15 @@ func runOpenSSLCommand(cmd *exec.Cmd, input []byte) []byte {
 	err := cmd.Run()
 
 	if err != nil {
-		Error.Fatalf("OpenSSL error: %s. Stderr: %s", err, stderr.String())
+		Error.Panicf("OpenSSL error: %s. Stderr: %s", err, stderr.String())
 	}
 
 	if stderr.Len() != 0 {
-		Error.Fatalf("OpenSSL stderr not empty: %s", stderr.String())
+		Error.Panicf("OpenSSL stderr not empty: %s", stderr.String())
 	}
 
 	if stdout.Len() == 0 {
-		Error.Fatalf("OpenSSL stdout empty")
+		Error.Panicf("OpenSSL stdout empty")
 	}
 
 	return stdout.Bytes()
