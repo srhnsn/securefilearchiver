@@ -357,36 +357,63 @@ func walkDirectoryFn(
 	}
 }
 
-func printProgress(progressInfo *ProgressInfo, time time.Duration) {
-	size := utils.FormatFileSize(progressInfo.ProcessedData)
+func printProgress(
+	progressInfo *ProgressInfo,
+	lastTickDuration time.Duration,
+	lastTickData uint64,
+	totalDuration time.Duration,
+) {
+
+	processedDataFormatted := utils.FormatFileSize(progressInfo.ProcessedData)
+
+	speed := lastTickData / uint64(lastTickDuration.Seconds())
+	speedFormatted := utils.FormatFileSize(speed) + "/s"
 
 	utils.Info.Printf(`Archive process started %s ago.
 Skipped files:   %d
 Processed files: %d
 Processed data:  %s
 Current file:    %s
+Current speed:   %s
 
 `,
-		time,
+		totalDuration,
 		progressInfo.SkippedFiles,
 		progressInfo.ProcessedFiles,
-		size,
+		processedDataFormatted,
 		progressInfo.CurrentFile,
+		speedFormatted,
 	)
 }
 
 func startProgressUpdater(progressInfo *ProgressInfo, done chan bool) {
 	go func() {
+		lastTotalProcessedData := progressInfo.ProcessedData
+		lastTick := time.Now()
 		start := time.Now()
 		ticker := time.NewTicker(progressUpdateInterval)
 
 		for {
 			select {
 			case <-ticker.C:
-				d := time.Now().Sub(start)
-				d = time.Duration(d.Seconds()) * time.Second
+				now := time.Now()
 
-				printProgress(progressInfo, d)
+				lastTickDuration := now.Sub(lastTick)
+				lastTick = now
+
+				lastTickData := progressInfo.ProcessedData - lastTotalProcessedData
+				lastTotalProcessedData = progressInfo.ProcessedData
+
+				totalDuration := now.Sub(start)
+				totalDuration = time.Duration(totalDuration.Seconds()) * time.Second
+
+				printProgress(
+					progressInfo,
+					lastTickDuration,
+					lastTickData,
+					totalDuration,
+				)
+
 			case <-done:
 				ticker.Stop()
 				return
