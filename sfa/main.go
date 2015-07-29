@@ -24,7 +24,8 @@ var (
 
 	restore          = app.Command("restore", "Restore files.")
 	restoreInputDir  = restore.Arg("source", "Source directory.").Required().String()
-	restoreOutputDir = restore.Arg("destination", "Destination directory").Required().String()
+	restoreOutputDir = restore.Arg("destination", "Destination directory.").Required().String()
+	restorePattern   = restore.Flag("pattern", "A glob pattern to selectively restore files.").String()
 )
 
 func main() {

@@ -28,8 +28,10 @@ you do not trust (i. e. Dropbox and the like).
         Archive files.
 
 
-      restore <source> <destination>
+      restore [<flags>] <source> <destination>
         Restore files.
+
+        --pattern=PATTERN  A glob pattern to selectively restore files.
 
 # Technical overview
 
@@ -97,7 +99,6 @@ neither should you.
 
 1. Empty directories should be archived.
 1. Modification times of directories should be archived.
-1. Selective restores.
 1. Tests.
 1. Old snapshots should be pruned at some point.
 1. A way to determine good chunk sizes should be found. Current threshold is fixed at 1 MiB.

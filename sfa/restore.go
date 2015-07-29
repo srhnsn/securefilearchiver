@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ryanuber/go-glob"
+
 	"github.com/srhnsn/securefilearchiver/models"
 	"github.com/srhnsn/securefilearchiver/utils"
 )
@@ -15,17 +17,18 @@ import (
 const outputScriptfile = "restore.bat"
 const mtimeFormat = "2006-01-02 15:04:05.999999999 -0700"
 
-func restoreFiles(inputDir string, outputDir string) {
-	utils.Trace.Println("reading index")
-	doc, err := readIndex(getDatabaseFilename(inputDir, *plainIndex))
+func getRestoreFilesCommands(inputDir string, outputDir string, doc *models.Document) ([]string, uint64) {
+	out := []string{}
 
-	if err != nil {
-		utils.Error.Fatalln(err)
-	}
-
-	out := []string{"@echo off", ""}
+	var noFiles uint64
 
 	for shortPath, file := range doc.Files {
+		if len(*restorePattern) != 0 && !glob.Glob(*restorePattern, shortPath) {
+			continue
+		}
+
+		noFiles += 1
+
 		destDir := filepath.Join(outputDir, filepath.Dir(shortPath))
 		filename := filepath.Base(shortPath)
 
@@ -41,6 +44,32 @@ func restoreFiles(inputDir string, outputDir string) {
 		out = append(out, chunkCmds...)
 		out = append(out, getTouchCmd(filepath.Join(destDir, filename), file.ModificationTime.Time))
 		out = append(out, "")
+	}
+
+	return out, noFiles
+}
+
+func restoreFiles(inputDir string, outputDir string) {
+	utils.Trace.Println("reading index")
+	doc, err := readIndex(getDatabaseFilename(inputDir, *plainIndex))
+
+	if err != nil {
+		utils.Error.Fatalln(err)
+	}
+
+	if len(*restorePattern) != 0 {
+		utils.Info.Printf("using restore pattern %s", *restorePattern)
+	}
+
+	out := []string{"@echo off", ""}
+
+	restoreCommands, noFiles := getRestoreFilesCommands(inputDir, outputDir, doc)
+	out = append(out, restoreCommands...)
+
+	if len(*restorePattern) == 0 {
+		utils.Info.Printf("restored %d files", len(doc.Files))
+	} else {
+		utils.Info.Printf("restored %d out of %d files", noFiles, len(doc.Files))
 	}
 
 	out = append(out, "pause")
