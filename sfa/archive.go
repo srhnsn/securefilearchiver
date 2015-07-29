@@ -194,8 +194,16 @@ func saveFile(outputDir string, filename string, data []byte) error {
 	destDir := filepath.Join(outputDir, filename[0:2], filename[0:4])
 	destPath := filepath.Join(destDir, filename)
 
+	tmpPath := destPath + TmpSuffix
+
 	os.MkdirAll(destDir, 0700)
-	err := ioutil.WriteFile(destPath, data, 0700)
+	err := ioutil.WriteFile(tmpPath, data, 0700)
+
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(tmpPath, destPath)
 
 	if err != nil {
 		return err
