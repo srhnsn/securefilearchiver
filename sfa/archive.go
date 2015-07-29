@@ -246,6 +246,9 @@ func walkDirectory(inputDir string, outputDir string) {
 	utils.Trace.Println("checking for deleted files")
 	markRemovedPaths(removedPaths, doc)
 
+	utils.Trace.Println("writing to index")
+	saveIndex(getIndexFilename(outputDir), doc)
+
 	utils.Trace.Println("checking for unused chunks")
 	chunkIndex := getChunkIndexMap(doc)
 	unusedChunks := getUnusedChunks(chunkIndex, outputDir)
@@ -254,9 +257,6 @@ func walkDirectory(inputDir string, outputDir string) {
 	if len(unusedChunks) > 0 {
 		utils.Info.Printf("found %d unused chunks", len(unusedChunks))
 	}
-
-	utils.Trace.Println("writing to index")
-	saveIndex(getIndexFilename(outputDir), doc)
 }
 
 func walkDirectoryFn(
