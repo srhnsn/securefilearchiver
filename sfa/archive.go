@@ -282,6 +282,10 @@ func walkDirectoryFn(
 			return filepath.SkipDir
 		}
 
+		if fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink && !*archiveSymlinks {
+			return filepath.SkipDir
+		}
+
 		var shortPath string
 
 		if len(fullPath) >= inputDirLength {

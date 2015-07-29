@@ -28,6 +28,7 @@ var (
 	archive          = app.Command("archive", "Archive files.")
 	archiveInputDir  = archive.Arg("source", "Source directory.").Required().String()
 	archiveOutputDir = archive.Arg("destination", "Destination directory").Required().String()
+	archiveSymlinks  = archive.Flag("follow-symlinks", "Follow and archive symbolic links. They are ignored otherwise.").Bool()
 
 	restore          = app.Command("restore", "Restore files.")
 	restoreInputDir  = restore.Arg("source", "Source directory.").Required().String()

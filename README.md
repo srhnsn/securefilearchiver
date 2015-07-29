@@ -25,9 +25,11 @@ you do not trust (i. e. Dropbox and the like).
         Show help.
 
 
-      archive <source> <destination>
+      archive [<flags>] <source> <destination>
         Archive files.
 
+        --follow-symlinks  Follow and archive symbolic links. They are ignored
+                           otherwise.
 
       restore [<flags>] <source> <destination>
         Restore files.
