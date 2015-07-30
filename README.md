@@ -63,10 +63,11 @@ This will install the `sfa` binary to [`$GOPATH/bin`](https://golang.org/doc/cod
 1. SFA splits the files in the directory in chunks with a specific maximum size for better
    cloud software compatibility and stores them in a directory.  
    (Try uploading an encrypted 250 GB container file to Dropbox.)
-1. Each chunk is encrypted by using symmetric GnuPG encryption. The used command is:  
-   `gpg2 --batch --cipher-algo AES-256 --compress-algo none --force-mdc --passphrase-fd 0 --symmetric`  
-   `Stdin` and `stdout` are used for password and data transfer.
-1. An encrypted `index.json.bin` is generated which stores this information about each file:
+1. Each chunk is encrypted with symmetric OpenPGP encryption using the package
+    `golang.org/x/crypto/openpgp`. The code for doing cryptography is in `utils/crypto.go`
+    and should be equivalent to this GnuPG command:
+   `gpg2 --batch --cipher-algo AES-256 --compress-algo none --symmetric`  
+1. An encrypted `index.json.gz.bin` is generated which stores this information about each file:
     1. Filename
     1. Modification date
     1. Size

@@ -48,7 +48,7 @@ func createUnusedChunksDeleteBatch(files []string, directory string) {
 }
 
 func decryptIndexKey(doc *models.Document, password string) {
-	doc.KeyUnencrypted = string(utils.DecryptData([]byte(doc.KeyEncrypted), password))
+	doc.KeyUnencrypted = string(utils.DecryptDataArmored([]byte(doc.KeyEncrypted), password))
 }
 
 func encryptIndexKey(doc *models.Document, password string) {
