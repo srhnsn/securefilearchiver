@@ -3,9 +3,22 @@
 Secure File Archiver (SFA) is a tool for securely storing files in locations
 you do not trust (i. e. Dropbox and the like).
 
+# Requirements
+
+## Requirements for building
+
+1. Go 1.5 or newer
+
+## Requirements for using
+
+1. `openssl` (must be in `$PATH`)
+1. `touch` (must be in `$PATH`)
+
 # Installation
 
 `go get github.com/srhnsn/securefilearchiver/...`
+
+This will install the `sfa` binary to [`$GOPATH/bin`](https://golang.org/doc/code.html).
 
 ## Usage
 
