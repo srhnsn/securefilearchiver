@@ -87,6 +87,7 @@ func restoreFiles(inputDir string, outputDir string) {
 	out := []string{
 		"@echo off",
 		"",
+		"chcp 65001 >NUL",
 		"set " + utils.PasswordEnv + "=" + doc.KeyUnencrypted,
 		"",
 	}
