@@ -167,7 +167,7 @@ func restoreMultipleChunks(inputDir string, destDir string, filename string, fil
 
 func getConcatCmd(files []string, dest string) string {
 	return fmt.Sprintf(
-		`copy /B "%s" %s >NUL`,
+		`copy /B /Y "%s" "%s" >NUL`,
 		strings.Join(files, `"+"`),
 		dest,
 	)
