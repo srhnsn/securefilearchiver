@@ -123,7 +123,7 @@ func createAndGetChunks(archive *ArchiveInfo) ([]models.Chunk, error) {
 		name := hex.EncodeToString(hash[:])
 
 		if !chunkExists(name, archive) {
-			ciphertext := utils.EncryptDataEnvPassword(data, archive.Document.KeyUnencrypted)
+			ciphertext := utils.EncryptData(data, archive.Document.KeyUnencrypted)
 
 			err = saveFile(archive.OutputDir, name+EncSuffix, ciphertext)
 

@@ -4,93 +4,77 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"io"
-	"os"
 	"os/exec"
 )
 
-// PasswordEnv is the environment variable that is used for password
-// storage for OpenSSL.
-const PasswordEnv = "SFA_PASSWORD"
+const gnupgBinary = "gpg2"
 
-// DecryptData decrypts data using symmetric OpenSSL decryption.
-func DecryptData(ciphertext []byte, password string) []byte {
+// DecryptData decrypts data using GnuPG decryption.
+func DecryptData(input []byte, password string) []byte {
 	cmd := exec.Command(
-		"openssl",
-		"enc",
-		"-aes-256-cbc",
-		"-d",
-		"-pass",
-		password,
+		gnupgBinary,
+		"--batch",
+		"--decrypt",
+		"--passphrase-fd", "0",
+		"--quiet",
 	)
 
-	return runOpenSSLCommand(cmd, ciphertext)
+	input = append([]byte(password+"\n"), input...)
+
+	return runGnuPGCommand(cmd, input)
 }
 
-// DecryptDataEnvPassword decrypts data using symmetric OpenSSL decryption.
-// It uses environment variables for passing the password.
-func DecryptDataEnvPassword(data []byte, password string) []byte {
-	openSSLPassword := "env:" + PasswordEnv
-
-	err := os.Setenv(PasswordEnv, password)
-
-	if err != nil {
-		Error.Panicln(err)
-	}
-
-	result := DecryptData(data, openSSLPassword)
-
-	err = os.Setenv(PasswordEnv, "")
-
-	if err != nil {
-		Error.Panicln(err)
-	}
-
-	return result
-}
-
-// EncryptData encrypts data using symmetric OpenSSL encryption.
-func EncryptData(data []byte, password string) []byte {
-	// Use own salt to speed up encryption.
-
+// EncryptData encrypts data using symmetric GnuPG encryption.
+func EncryptData(input []byte, password string) []byte {
 	cmd := exec.Command(
-		"openssl",
-		"enc",
-		"-aes-256-cbc",
-		"-e",
-		"-S",
-		getSaltHex(),
-		"-pass",
-		password,
+		gnupgBinary,
+		"--batch",
+		"--cipher-algo", "AES-256",
+		"--compress-algo", "none",
+		"--force-mdc",
+		"--passphrase-fd", "0",
+		"--symmetric",
 	)
 
-	return runOpenSSLCommand(cmd, data)
+	input = append([]byte(password+"\n"), input...)
+
+	return runGnuPGCommand(cmd, input)
 }
 
-// EncryptDataEnvPassword encrypts data using symmetric OpenSSL encryption.
-// It uses environment variables for passing the password.
-func EncryptDataEnvPassword(data []byte, password string) []byte {
-	openSSLPassword := "env:" + PasswordEnv
+// EncryptDataArmored encrypts data using symmetric GnuPG encryption.
+// The result will be armored GnuPG output.
+func EncryptDataArmored(input []byte, password string) []byte {
+	cmd := exec.Command(
+		gnupgBinary,
+		"--armor",
+		"--batch",
+		"--cipher-algo", "AES-256",
+		"--compress-algo", "none",
+		"--force-mdc",
+		"--passphrase-fd", "0",
+		"--symmetric",
+	)
 
-	err := os.Setenv(PasswordEnv, password)
+	input = append([]byte(password+"\n"), input...)
 
-	if err != nil {
-		Error.Panicln(err)
-	}
-
-	result := EncryptData(data, openSSLPassword)
-
-	err = os.Setenv(PasswordEnv, "")
-
-	if err != nil {
-		Error.Panicln(err)
-	}
-
-	return result
+	return runGnuPGCommand(cmd, input)
 }
 
-// GetNewOpenSSLKey returns 32 random bytes, encoded as a 64 byte hex string.
-func GetNewOpenSSLKey() string {
+// GetDecryptCommand returns a Windows console command to decrypt a specific
+// file that was encrypted with GnuPG
+func GetDecryptCommand(inputFile string, outputFile string, password string) string {
+	return fmt.Sprintf(`echo %s| %s --batch --decrypt --passphrase-fd 0 --quiet --output "%s" "%s"`,
+		password,
+		gnupgBinary,
+		outputFile,
+		inputFile,
+	)
+}
+
+// GetNewDocumentKey returns 32 random bytes, encoded as a 64 byte hex string.
+func GetNewDocumentKey() string {
 	return getRandomHexBytes(32)
 }
 
@@ -105,11 +89,7 @@ func getRandomHexBytes(length int) string {
 	return hex.EncodeToString(data)
 }
 
-func getSaltHex() string {
-	return getRandomHexBytes(8)
-}
-
-func runOpenSSLCommand(cmd *exec.Cmd, input []byte) []byte {
+func runGnuPGCommand(cmd *exec.Cmd, input []byte) []byte {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -120,15 +100,15 @@ func runOpenSSLCommand(cmd *exec.Cmd, input []byte) []byte {
 	err := cmd.Run()
 
 	if err != nil {
-		Error.Panicf("OpenSSL error: %s. Stderr: %s", err, stderr.String())
+		Error.Panicf("GnuPG error: %s. Stderr: %s", err, stderr.String())
 	}
 
 	if stderr.Len() != 0 {
-		Error.Panicf("OpenSSL stderr not empty: %s", stderr.String())
+		Error.Panicf("GnuPG stderr not empty: %s", stderr.String())
 	}
 
 	if stdout.Len() == 0 {
-		Error.Panicf("OpenSSL stdout empty")
+		Error.Panicf("GnuPG stdout empty")
 	}
 
 	return stdout.Bytes()

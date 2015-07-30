@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -49,18 +48,12 @@ func createUnusedChunksDeleteBatch(files []string, directory string) {
 }
 
 func decryptIndexKey(doc *models.Document, password string) {
-	data, err := hex.DecodeString(doc.KeyEncrypted)
-
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
-
-	doc.KeyUnencrypted = string(utils.DecryptData(data, password))
+	doc.KeyUnencrypted = string(utils.DecryptData([]byte(doc.KeyEncrypted), password))
 }
 
 func encryptIndexKey(doc *models.Document, password string) {
-	key := utils.EncryptData([]byte(doc.KeyUnencrypted), password)
-	doc.KeyEncrypted = hex.EncodeToString(key)
+	key := utils.EncryptDataArmored([]byte(doc.KeyUnencrypted), password)
+	doc.KeyEncrypted = string(key)
 }
 
 func garbageCollect(inputDir string) {
@@ -139,7 +132,7 @@ func getIndexFilename(directory string) string {
 }
 
 func getNewDocument() *models.Document {
-	keyUnencrypted := utils.GetNewOpenSSLKey()
+	keyUnencrypted := utils.GetNewDocumentKey()
 
 	return &models.Document{
 		KeyUnencrypted: keyUnencrypted,

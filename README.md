@@ -11,7 +11,7 @@ you do not trust (i. e. Dropbox and the like).
 
 ## Requirements for using
 
-1. `openssl` (must be in `$PATH`)
+1. `gpg2` (must be in `$PATH`)
 1. `touch` (must be in `$PATH`)
 
 # Installation
@@ -27,11 +27,11 @@ This will install the `sfa` binary to [`$GOPATH/bin`](https://golang.org/doc/cod
     A secure file archiver.
 
     Flags:
-      --help         Show help (also see --help-long and --help-man).
-      -v, --verbose  Verbose output.
-      --noindexenc   Do not encrypt index file.
-      --noindexzip   Do not compress index file.
-      --pass=PASS    Pass phrase argument that is passed as-is to OpenSSL's -pass.
+      --help               Show help (also see --help-long and --help-man).
+      -v, --verbose        Verbose output.
+      --noindexenc         Do not encrypt index file.
+      --noindexzip         Do not compress index file.
+      --password=PASSWORD  Password to use for encryption and decryption.
 
     Commands:
       help [<command>...]
@@ -63,9 +63,9 @@ This will install the `sfa` binary to [`$GOPATH/bin`](https://golang.org/doc/cod
 1. SFA splits the files in the directory in chunks with a specific maximum size for better
    cloud software compatibility and stores them in a directory.  
    (Try uploading an encrypted 250 GB container file to Dropbox.)
-1. Each chunk is encrypted by using symmetric OpenSSL encryption. The used command is:  
-   `openssl enc -aes-256-cbc -e -S <salt> -pass <password>`  
-   `Stdin` and `stdout` are used for data transfer.
+1. Each chunk is encrypted by using symmetric GnuPG encryption. The used command is:  
+   `gpg2 --batch --cipher-algo AES-256 --compress-algo none --force-mdc --passphrase-fd 0 --symmetric`  
+   `Stdin` and `stdout` are used for password and data transfer.
 1. An encrypted `index.json.bin` is generated which stores this information about each file:
     1. Filename
     1. Modification date
@@ -88,8 +88,8 @@ inspect or repair the backed up files some day.
 After the `index.json.bin` is read, these are the commands that are used to restore
 each file:
 
-1. For each chunk of each file a specific OpenSSL command is generated:  
-   `openssl enc -aes-256-cbc -d -pass <password> -in <encrypted_chunk> -out <decrypted_chunk>`
+1. For each chunk of each file a specific GnuPG command is generated:  
+   `echo <password>| gpg2 --batch --decrypt --passphrase-fd 0 --quiet --output <decrypted_chunk> <encrypted_chunk>`
 1. On Windows, decrypted chunks are concatenated with the `copy` command:  
    `copy /B <chunk_1>+<chunk_2>+...+<chunk_n> <original_filename>`
 1. Modification times are restored with `touch`.

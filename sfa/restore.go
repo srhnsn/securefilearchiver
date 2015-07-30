@@ -14,8 +14,11 @@ import (
 	"github.com/srhnsn/securefilearchiver/utils"
 )
 
-const outputScriptfile = "restore.bat"
-const mtimeFormat = "2006-01-02 15:04:05.999999999 -0700"
+const (
+	outputScriptfile = "restore.bat"
+	mtimeFormat      = "2006-01-02 15:04:05.999999999 -0700"
+	passwordEnv      = "SFA_PASSWORD"
+)
 
 func getRestoreFileCommands(inputDir string, outputDir string, shortPath string, file models.File) []string {
 	if file.IsDirectory {
@@ -87,7 +90,7 @@ func restoreFiles(inputDir string, outputDir string) {
 		"@echo off",
 		"",
 		"chcp 65001 >NUL",
-		"set " + utils.PasswordEnv + "=" + doc.KeyUnencrypted,
+		"set " + passwordEnv + "=" + doc.KeyUnencrypted,
 		"",
 	}
 
@@ -100,7 +103,7 @@ func restoreFiles(inputDir string, outputDir string) {
 		utils.Info.Printf("restored %d out of %d files", noFiles, len(doc.Files))
 	}
 
-	out = append(out, "set "+utils.PasswordEnv+"=")
+	out = append(out, "set "+passwordEnv+"=")
 	out = append(out, "pause")
 	err = os.MkdirAll(outputDir, 0700)
 
@@ -123,13 +126,7 @@ func restoreSingleChunk(inputDir string, destDir string, filename string, file m
 	chunkSource := filepath.Join(inputDir, chunk.Name[0:2], chunk.Name[0:4], chunk.Name+EncSuffix)
 	chunkDest := filepath.Join(destDir, filename)
 
-	cmd := fmt.Sprintf(
-		`openssl enc -aes-256-cbc -d -pass env:%s -in "%s" -out "%s"`,
-		utils.PasswordEnv,
-		chunkSource,
-		chunkDest,
-	)
-
+	cmd := utils.GetDecryptCommand(chunkSource, chunkDest, "%"+passwordEnv+"%")
 	out = append(out, cmd)
 
 	return out
@@ -146,12 +143,7 @@ func restoreMultipleChunks(inputDir string, destDir string, filename string, fil
 		chunkSource := filepath.Join(inputDir, chunk.Name[0:2], chunk.Name[0:4], chunk.Name+EncSuffix)
 		chunkDest := filepath.Join(destDir, fmt.Sprintf("%s.%d", filename, chunkNo+1))
 
-		cmd := fmt.Sprintf(
-			`openssl enc -aes-256-cbc -d -pass env:%s -in "%s" -out "%s"`,
-			utils.PasswordEnv,
-			chunkSource,
-			chunkDest,
-		)
+		cmd := utils.GetDecryptCommand(chunkSource, chunkDest, "%"+passwordEnv+"%")
 
 		out = append(out, cmd)
 		concatList = append(concatList, chunkDest)

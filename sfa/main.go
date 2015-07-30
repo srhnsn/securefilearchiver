@@ -13,7 +13,6 @@ const (
 	EncSuffix = ".bin"
 	// TmpSuffix is the suffix for all temporary files.
 	TmpSuffix = ".tmp"
-
 	// ZipSuffix is the suffix for all compressed files.
 	ZipSuffix = ".gz"
 )
@@ -23,7 +22,7 @@ var (
 	verbose    = app.Flag("verbose", "Verbose output.").Short('v').Bool()
 	noIndexEnc = app.Flag("noindexenc", "Do not encrypt index file.").Bool()
 	noIndexZip = app.Flag("noindexzip", "Do not compress index file.").Bool()
-	password   = app.Flag("pass", "Pass phrase argument that is passed as-is to OpenSSL's -pass.").String()
+	password   = app.Flag("password", "Password to use for encryption and decryption.").String()
 
 	archive          = app.Command("archive", "Archive files.")
 	archiveInputDir  = archive.Arg("source", "Source directory.").Required().String()
