@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/srhnsn/securefilearchiver/models"
 	"github.com/srhnsn/securefilearchiver/utils"
@@ -60,6 +61,25 @@ func decryptIndexKey(doc *models.Document, password string) {
 func encryptIndexKey(doc *models.Document, password string) {
 	key := utils.EncryptData([]byte(doc.KeyUnencrypted), password)
 	doc.KeyEncrypted = hex.EncodeToString(key)
+}
+
+func garbageCollect(inputDir string) {
+	doc, err := readIndex(getExistingIndexFilename(inputDir))
+
+	if err != nil {
+		utils.Error.Panicln(err)
+	}
+
+	utils.Trace.Println("checking for unused chunks")
+	chunkIndex := getChunkIndexMap(doc)
+	unusedChunks := getUnusedChunks(chunkIndex, inputDir)
+	createUnusedChunksDeleteBatch(unusedChunks, inputDir)
+
+	if len(unusedChunks) > 0 {
+		utils.Info.Printf("found %d unused chunks", len(unusedChunks))
+	} else {
+		utils.Info.Printf("no unused chunks")
+	}
 }
 
 func getChunkIndexMap(doc *models.Document) chunkIndexMap {
@@ -182,7 +202,54 @@ func getRemovedPathsMap(doc *models.Document) removedPathsMap {
 	return paths
 }
 
+func pruneFiles(inputDir string, pruneRangeStr string) {
+	doc, err := readIndex(getExistingIndexFilename(inputDir))
+
+	if err != nil {
+		utils.Error.Panicln(err)
+	}
+
+	pruneRange, err := utils.ParseHumanRange(pruneRangeStr)
+
+	if err != nil {
+		utils.Error.Panicln(err)
+	}
+
+	pruneThreshold := time.Now().Add(-pruneRange)
+
+	utils.Info.Printf("pruning files that were found to be deleted before %s (%s ago)\n",
+		pruneThreshold, pruneRange)
+
+	var prunedFiles uint64
+
+	for shortPath, versions := range doc.DeletedFiles {
+		newVersions := []models.File{}
+
+		for _, file := range versions {
+			if file.DeletedAt.Time.After(pruneThreshold) {
+				newVersions = append(newVersions, file)
+				continue
+			}
+
+			prunedFiles++
+		}
+
+		if len(newVersions) > 0 {
+			doc.DeletedFiles[shortPath] = newVersions
+		} else {
+			delete(doc.DeletedFiles, shortPath)
+		}
+	}
+
+	utils.Trace.Printf("pruned %d files\n", prunedFiles)
+
+	utils.Trace.Println("writing to index")
+	saveIndex(getIndexFilename(inputDir), doc)
+}
+
 func readIndex(filename string) (*models.Document, error) {
+	utils.Trace.Println("reading index")
+
 	if !utils.FileExists(filename) {
 		utils.Info.Printf("no index found at %s, creating new archive\n", filename)
 

@@ -224,7 +224,6 @@ func saveFile(outputDir string, filename string, data []byte) error {
 }
 
 func walkDirectory(inputDir string, outputDir string) {
-	utils.Trace.Println("reading index")
 	doc, err := readIndex(getExistingIndexFilename(outputDir))
 
 	if err != nil {
@@ -250,15 +249,6 @@ func walkDirectory(inputDir string, outputDir string) {
 
 	utils.Trace.Println("writing to index")
 	saveIndex(getIndexFilename(outputDir), doc)
-
-	utils.Trace.Println("checking for unused chunks")
-	chunkIndex := getChunkIndexMap(doc)
-	unusedChunks := getUnusedChunks(chunkIndex, outputDir)
-	createUnusedChunksDeleteBatch(unusedChunks, outputDir)
-
-	if len(unusedChunks) > 0 {
-		utils.Info.Printf("found %d unused chunks", len(unusedChunks))
-	}
 }
 
 func walkDirectoryFn(

@@ -73,7 +73,6 @@ func getRestoreFilesCommands(inputDir string, outputDir string, doc *models.Docu
 }
 
 func restoreFiles(inputDir string, outputDir string) {
-	utils.Trace.Println("reading index")
 	doc, err := readIndex(getExistingIndexFilename(inputDir))
 
 	if err != nil {

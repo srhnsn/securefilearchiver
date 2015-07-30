@@ -36,6 +36,12 @@ you do not trust (i. e. Dropbox and the like).
 
         --pattern=PATTERN  A glob pattern to selectively restore files.
 
+      index [<flags>] <source>
+        Index operations.
+
+        --prune=PRUNE  Prune deleted files older than a specific time range.
+        --gc           Remove unused chunks.
+
 # Technical overview
 
 ## Archiving files
@@ -104,7 +110,6 @@ neither should you.
 # To do
 
 1. Index status viewer.
-1. Old snapshots should be pruned at some point.
 1. Tests.
 1. A way to determine good chunk sizes should be found. Current threshold is fixed at 1 MiB.
 1. Actual Linux support.

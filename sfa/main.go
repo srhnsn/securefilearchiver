@@ -34,6 +34,11 @@ var (
 	restoreInputDir  = restore.Arg("source", "Source directory.").Required().String()
 	restoreOutputDir = restore.Arg("destination", "Destination directory.").Required().String()
 	restorePattern   = restore.Flag("pattern", "A glob pattern to selectively restore files.").String()
+
+	indexCmd      = app.Command("index", "Index operations.")
+	indexInputDir = indexCmd.Arg("source", "Source directory.").Required().String()
+	indexPrune    = indexCmd.Flag("prune", "Prune deleted files older than a specific time range.").String()
+	indexGC       = indexCmd.Flag("gc", "Remove unused chunks.").Bool()
 )
 
 func main() {
@@ -53,5 +58,16 @@ func main() {
 		output := normalizePath(*restoreOutputDir)
 
 		restoreFiles(input, output)
+
+	case indexCmd.FullCommand():
+		input := normalizePath(*indexInputDir)
+
+		if len(*indexPrune) != 0 {
+			pruneFiles(input, *indexPrune)
+		}
+
+		if *indexGC {
+			garbageCollect(input)
+		}
 	}
 }
