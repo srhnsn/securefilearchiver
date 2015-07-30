@@ -104,8 +104,9 @@ reasons, and I still need a reliable backup solution.
 
 ### Can I actually use this?
 
-This is yet another Work In Progress™ and I am not using it for my own backups so far, so
-neither should you.
+Maybe. This is experimental software and I myself am currently in the process of
+using it for partial backups of my full backups. If things go wrong because of
+this tool, I will still have my usual full backups.
 
 # To do
 
