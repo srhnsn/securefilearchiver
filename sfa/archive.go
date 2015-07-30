@@ -15,8 +15,8 @@ import (
 )
 
 const (
+	indexSaveInterval      = 1 * time.Minute
 	progressUpdateInterval = 5 * time.Second
-	saveIndexThreshold     = 1024 * 1024 * 1024
 )
 
 // ArchiveInfo is a struct which holds all needed information for archiving
@@ -236,12 +236,14 @@ func walkDirectory(inputDir string, outputDir string) {
 
 	var progressInfo ProgressInfo
 	done := make(chan bool)
+	saveTicker := time.NewTicker(indexSaveInterval)
 	startProgressUpdater(&progressInfo, done)
-	walkFn := walkDirectoryFn(inputDir, outputDir, doc, removedPaths, &progressInfo)
+	walkFn := walkDirectoryFn(inputDir, outputDir, doc, removedPaths, &progressInfo, saveTicker.C)
 
 	utils.Trace.Println("checking for changed files")
 	filepath.Walk(inputDir, walkFn)
 	done <- true
+	saveTicker.Stop()
 
 	utils.Trace.Println("checking for deleted files")
 	markRemovedPaths(removedPaths, doc)
@@ -265,10 +267,10 @@ func walkDirectoryFn(
 	doc *models.Document,
 	removedPaths removedPathsMap,
 	progressInfo *ProgressInfo,
+	save <-chan time.Time,
 ) filepath.WalkFunc {
 
 	inputDirLength := len(inputDir) + 1
-	var lastIndexSaveAt uint64
 
 	return func(fullPath string, fileInfo os.FileInfo, err error) error {
 		fullPath = utils.FixSlashes(fullPath)
@@ -348,11 +350,12 @@ func walkDirectoryFn(
 			progressInfo.ProcessedData += archive.FileSize
 		}
 
-		if progressInfo.ProcessedData-lastIndexSaveAt > saveIndexThreshold {
+		select {
+		case <-save:
 			utils.Info.Println("doing intermediary index save")
-			lastIndexSaveAt = progressInfo.ProcessedData
 			saveIndex(getIndexFilename(outputDir), doc)
 			utils.Info.Println("continuing archive process")
+		default:
 		}
 
 		return nil
