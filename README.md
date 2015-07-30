@@ -9,7 +9,7 @@ you do not trust (i. e. Dropbox and the like).
 
 1. Go 1.5 or newer
 
-## Requirements for using
+## Requirements for restoring
 
 1. `gpg2` (must be in `$PATH`)
 1. `touch` (must be in `$PATH`)
@@ -64,8 +64,9 @@ This will install the `sfa` binary to [`$GOPATH/bin`](https://golang.org/doc/cod
    cloud software compatibility and stores them in a directory.  
    (Try uploading an encrypted 250 GB container file to Dropbox.)
 1. Each chunk is encrypted with symmetric OpenPGP encryption using the package
-    `golang.org/x/crypto/openpgp`. The code for doing cryptography is in `utils/crypto.go`
-    and should be equivalent to this GnuPG command:
+    [`golang.org/x/crypto/openpgp`](https://golang.org/x/crypto/openpgp).
+    The code for doing cryptography is in `utils/crypto.go` and should be equivalent to
+    this GnuPG command:  
    `gpg2 --batch --cipher-algo AES-256 --compress-algo none --symmetric`  
 1. An encrypted `index.json.gz.bin` is generated which stores this information about each file:
     1. Filename
@@ -83,29 +84,32 @@ key and stored in the index file. The index file is, again, encrypted with your 
 
 SFA does not do any restoration itself. Instead, it generates batch files which only use
 standard Windows/Unix software. The reason for this is, I (and maybe you, too) want to
-be independant from third-party backup software as much as possible, in case I need to
-inspect or repair the backed up files some day.
+fully understand the architecture of the storage system and thus be independant from any
+required non-standard tools. That way I can inspect or repair the backed up files, if the
+need for this should ever arise.
 
-After the `index.json.bin` is read, these are the commands that are used to restore
+After the `index.json.gz.bin` is read, these are the commands that are used to restore
 each file:
 
 1. For each chunk of each file a specific GnuPG command is generated:  
    `echo <password>| gpg2 --batch --decrypt --passphrase-fd 0 --quiet --output <decrypted_chunk> <encrypted_chunk>`
 1. On Windows, decrypted chunks are concatenated with the `copy` command:  
-   `copy /B <chunk_1>+<chunk_2>+...+<chunk_n> <original_filename>`
+   `copy /B /Y <chunk_1>+<chunk_2>+...+<chunk_n> <original_filename>`
 1. Modification times are restored with `touch`.
 
 # Security considerations
 
-1. File content should be secure.
-1. Filenames should be secure.
+1. File content should be safe.
+1. Filenames should be safe.
 1. File sizes are not necessarily visible if
     1. the file size is greater than the chunk size and
     1. multiple files where 1. applies are updated (or else the remote host can check
        which chunks are updated together).
 1. Exact number of files should not be visible, however, there is some undeniable correlation
    between the number of files and the number of associated chunks.
-1. If the `index.json.bin` is lost, the archive will be pretty much useless.
+1. If the `index.json.gz.bin` is lost, the archive will be pretty much useless.
+1. Modifications of any encrypted files should not go unnoticed as OpenPGP uses
+[Modification Detection Codes](https://tools.ietf.org/html/rfc4880#section-5.14).
 
 # Questions and answers
 
