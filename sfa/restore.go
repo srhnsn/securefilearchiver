@@ -27,7 +27,7 @@ func getRestoreFileCommands(inputDir string, outputDir string, shortPath string,
 
 	out := []string{}
 
-	destDir := filepath.Join(outputDir, filepath.Dir(shortPath))
+	destDir := filepath.Dir(shortPath)
 	filename := filepath.Base(shortPath)
 
 	out = append(out, getMkDirCmd(destDir))
@@ -48,7 +48,7 @@ func getRestoreFileCommands(inputDir string, outputDir string, shortPath string,
 func getRestoreFileCommandsDirectory(inputDir string, outputDir string, shortPath string, file models.File) []string {
 	out := []string{}
 
-	destDir := filepath.Join(outputDir, shortPath)
+	destDir := shortPath
 
 	out = append(out, getMkDirCmd(destDir))
 	out = append(out, getTouchCmd(destDir, file.ModificationTime.Time))
