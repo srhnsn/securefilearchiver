@@ -61,7 +61,11 @@ func getRestoreFilesCommands(inputDir string, outputDir string, doc *models.Docu
 
 	var noFiles uint64
 
-	for shortPath, file := range doc.Files {
+	sortedKeys := doc.GetSortedFilesKeys()
+
+	for _, shortPath := range sortedKeys {
+		file := doc.Files[shortPath]
+
 		if len(*restorePattern) != 0 && len(shortPath) != 0 && !glob.Glob(*restorePattern, shortPath) {
 			continue
 		}
