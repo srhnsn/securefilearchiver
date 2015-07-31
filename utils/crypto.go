@@ -108,7 +108,7 @@ func EncryptDataArmored(input []byte, password string) []byte {
 // GetDecryptCommand returns a Windows console command to decrypt a specific
 // file that was encrypted with OpenPGP.
 func GetDecryptCommand(inputFile string, outputFile string, passwordFile string) string {
-	return fmt.Sprintf(`%s --batch --decrypt --passphrase-file "%s" --quiet --output "%s" "%s"`,
+	return fmt.Sprintf(`call %s --batch --decrypt --passphrase-file "%s" --quiet --output "%s" "%s"`,
 		gnupgBinary,
 		passwordFile,
 		outputFile,

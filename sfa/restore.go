@@ -183,7 +183,7 @@ func getMkDirCmd(dir string) string {
 
 func getTouchCmd(path string, mtime time.Time) string {
 	return fmt.Sprintf(
-		`touch -d "%s" "%s"`,
+		`call touch -d "%s" "%s"`,
 		mtime.Format(mtimeFormat),
 		path,
 	)
