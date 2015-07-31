@@ -66,6 +66,10 @@ func getRestorePathsCommands(inputDir string, outputDir string, doc *models.Docu
 		noFiles++
 		var cmds []string
 
+		if len(shortPath) == 0 {
+			shortPath = "."
+		}
+
 		if file.IsDirectory {
 			cmds = getRestoreDirectoryCommands(inputDir, outputDir, shortPath, file)
 		} else {
