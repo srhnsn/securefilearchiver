@@ -12,6 +12,7 @@ type Document struct {
 	DeletedFiles   map[string][]File `json:"deleted_files"`
 }
 
+// GetSortedFilesKeys returns sorted Document.Files keys.
 func (doc *Document) GetSortedFilesKeys() []string {
 	result := []string{}
 

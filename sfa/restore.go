@@ -20,11 +20,16 @@ const (
 	passwordEnv      = "SFA_PASSWORD"
 )
 
-func getRestoreFileCommands(inputDir string, outputDir string, shortPath string, file models.File) []string {
-	if file.IsDirectory {
-		return getRestoreFileCommandsDirectory(inputDir, outputDir, shortPath, file)
-	}
+func getRestoreDirectoryCommands(inputDir string, outputDir string, shortPath string, file models.File) []string {
+	out := []string{}
 
+	out = append(out, getMkDirCmd(shortPath))
+	out = append(out, getTouchCmd(shortPath, file.ModificationTime.Time))
+
+	return out
+}
+
+func getRestoreFileCommands(inputDir string, outputDir string, shortPath string, file models.File) []string {
 	out := []string{}
 
 	destDir := filepath.Dir(shortPath)
@@ -45,18 +50,7 @@ func getRestoreFileCommands(inputDir string, outputDir string, shortPath string,
 	return out
 }
 
-func getRestoreFileCommandsDirectory(inputDir string, outputDir string, shortPath string, file models.File) []string {
-	out := []string{}
-
-	destDir := shortPath
-
-	out = append(out, getMkDirCmd(destDir))
-	out = append(out, getTouchCmd(destDir, file.ModificationTime.Time))
-
-	return out
-}
-
-func getRestoreFilesCommands(inputDir string, outputDir string, doc *models.Document) ([]string, uint64) {
+func getRestorePathsCommands(inputDir string, outputDir string, doc *models.Document) ([]string, uint64) {
 	out := []string{}
 
 	var noFiles uint64
@@ -71,7 +65,14 @@ func getRestoreFilesCommands(inputDir string, outputDir string, doc *models.Docu
 		}
 
 		noFiles++
-		cmds := getRestoreFileCommands(inputDir, outputDir, shortPath, file)
+		var cmds []string
+
+		if file.IsDirectory {
+			cmds = getRestoreDirectoryCommands(inputDir, outputDir, shortPath, file)
+		} else {
+			cmds = getRestoreFileCommands(inputDir, outputDir, shortPath, file)
+		}
+
 		out = append(out, cmds...)
 		out = append(out, "")
 	}
@@ -98,7 +99,7 @@ func restoreFiles(inputDir string, outputDir string) {
 		"",
 	}
 
-	restoreCommands, noFiles := getRestoreFilesCommands(inputDir, outputDir, doc)
+	restoreCommands, noFiles := getRestorePathsCommands(inputDir, outputDir, doc)
 	out = append(out, restoreCommands...)
 
 	if len(*restorePattern) == 0 {
