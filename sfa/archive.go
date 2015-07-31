@@ -4,7 +4,6 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -208,13 +207,9 @@ func saveFile(outputDir string, filename string, data []byte) error {
 	tmpPath := destPath + TmpSuffix
 
 	os.MkdirAll(destDir, 0700)
-	err := ioutil.WriteFile(tmpPath, data, 0700)
+	utils.MustWriteFile(tmpPath, data)
 
-	if err != nil {
-		return err
-	}
-
-	err = os.Rename(tmpPath, destPath)
+	err := os.Rename(tmpPath, destPath)
 
 	if err != nil {
 		return err

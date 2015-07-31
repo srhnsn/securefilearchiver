@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -115,17 +114,9 @@ func restoreFiles(inputDir string, outputDir string) {
 	}
 
 	data := []byte(strings.Join(out, "\r\n"))
-	err = ioutil.WriteFile(filepath.Join(outputDir, outputScriptfile), data, 0700)
+	utils.MustWriteFile(filepath.Join(outputDir, outputScriptfile), data)
 
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
-
-	err = ioutil.WriteFile(filepath.Join(outputDir, passwordFile), []byte(doc.KeyUnencrypted), 0700)
-
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.MustWriteFile(filepath.Join(outputDir, passwordFile), []byte(doc.KeyUnencrypted))
 }
 
 func restoreSingleChunk(inputDir string, destDir string, filename string, file models.File) []string {

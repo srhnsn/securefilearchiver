@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"strconv"
@@ -53,6 +54,15 @@ func FormatFileSize(bytes uint64) string {
 	}
 
 	return fmt.Sprintf("%.1f TiB", float64(bytes)/1024/1024/1024/1024)
+}
+
+// MustWriteFile writes data to filename. It panics if there is an error.
+func MustWriteFile(filename string, data []byte) {
+	err := ioutil.WriteFile(filename, data, 0700)
+
+	if err != nil {
+		Error.Panicln(err)
+	}
 }
 
 // ParseHumanRange parses human time ranges into time.Durations.

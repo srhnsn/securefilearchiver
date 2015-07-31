@@ -40,11 +40,7 @@ func createUnusedChunksDeleteBatch(files []string, directory string) {
 	out = append(out, "pause")
 
 	data := []byte(strings.Join(out, "\r\n"))
-	err := ioutil.WriteFile(batchPath, data, 0700)
-
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.MustWriteFile(batchPath, data)
 }
 
 func decryptIndexKey(doc *models.Document, password string) {
@@ -287,11 +283,7 @@ func saveIndex(filename string, doc *models.Document) {
 	}
 
 	tempFilename := filename + TmpSuffix
-	err = ioutil.WriteFile(tempFilename, data, 0700)
-
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.MustWriteFile(tempFilename, data)
 
 	utils.Trace.Println("validating index")
 	err = validateIndex(tempFilename, doc)
