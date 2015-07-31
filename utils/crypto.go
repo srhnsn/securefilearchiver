@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -27,7 +28,14 @@ var (
 func DecryptData(input []byte, password string) []byte {
 	inputReader := bytes.NewReader(input)
 
+	tried := false
+
 	md, err := openpgp.ReadMessage(inputReader, nil, func(keys []openpgp.Key, symmetric bool) ([]byte, error) {
+		if tried {
+			return nil, errors.New("invalid password")
+		}
+
+		tried = true
 		return []byte(password), nil
 	}, nil)
 
