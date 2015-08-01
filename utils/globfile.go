@@ -18,7 +18,7 @@ func NewGlobfile(filename string) (Globfile, error) {
 	file, err := os.Open(filename)
 
 	if err != nil {
-		return Globfile{}, nil
+		return Globfile{}, err
 	}
 
 	defer file.Close()
@@ -40,7 +40,7 @@ func NewGlobfile(filename string) (Globfile, error) {
 	err = scanner.Err()
 
 	if err != nil {
-		return Globfile{}, nil
+		return Globfile{}, err
 	}
 
 	return Globfile{
