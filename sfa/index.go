@@ -217,6 +217,11 @@ func pruneFiles(inputDir string, pruneRangeStr string) {
 		newVersions := []models.File{}
 
 		for _, file := range versions {
+			if file.DeletedAt == nil {
+				utils.Error.Printf("%s is marked deleted but has no delete date, setting to now\n", shortPath)
+				file.DeletedAt = &models.JSONTime{Time: time.Now()}
+			}
+
 			if file.DeletedAt.Time.After(pruneThreshold) {
 				newVersions = append(newVersions, file)
 				continue

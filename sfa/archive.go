@@ -42,7 +42,7 @@ type ProgressInfo struct {
 }
 
 func addToDeletedFiles(archive *ArchiveInfo) {
-	archive.File.DeletedAt = models.JSONTime{Time: time.Now()}
+	archive.File.DeletedAt = &models.JSONTime{Time: time.Now()}
 	delete(archive.Document.Files, archive.ShortPath)
 
 	if archive.Document.DeletedFiles == nil {
