@@ -58,29 +58,28 @@ func addToDeletedFiles(archive *ArchiveInfo) {
 	}
 }
 
-func archiveDirectory(archive *ArchiveInfo) {
-	archive.File.Chunks = []models.Chunk{}
-	archive.File.IsDirectory = true
-	archive.File.ModificationTime = models.JSONTime{Time: archive.FileInfo.ModTime()}
-
-	archive.Document.Files[archive.ShortPath] = archive.File
-}
-
-func archiveFile(archive *ArchiveInfo) error {
-	if archive.FileInfo.IsDir() {
-		utils.Error.Panicln("directory passed to archiveFile")
-	}
-
-	chunks, err := createAndGetChunks(archive)
-
-	if err != nil {
-		return err
-	}
-
+func archiveFile(archive *ArchiveInfo, exists bool) error {
 	file := models.File{
-		Size:             archive.FileSize,
 		ModificationTime: models.JSONTime{Time: archive.FileInfo.ModTime()},
-		Chunks:           chunks,
+	}
+
+	if archive.FileInfo.IsDir() {
+		file.IsDirectory = true
+	} else {
+		chunks, err := createAndGetChunks(archive)
+
+		if err != nil {
+			return err
+		}
+
+		file.Chunks = chunks
+		file.Size = archive.FileSize
+	}
+
+	if exists {
+		file.AddedAt = archive.File.AddedAt
+	} else {
+		file.AddedAt = models.JSONTime{Time: time.Now()}
 	}
 
 	archive.Document.Files[archive.ShortPath] = file
@@ -327,19 +326,13 @@ func walkDirectoryFn(
 			ShortPath: shortPath,
 		}
 
-		// Fast path for directories as they do not need chunks.
+		// Fast path for directories as they do not need chunks and snapshots.
 		if fileInfo.IsDir() {
-			archiveDirectory(&archive)
+			archiveFile(&archive, exists)
 			return nil
 		}
 
 		if exists {
-			if fileInfo.IsDir() {
-				file.ModificationTime = models.JSONTime{Time: fileInfo.ModTime()}
-				doc.Files[shortPath] = file
-				return nil
-			}
-
 			if !fileHasChanged(&archive) {
 				progressInfo.SkippedData += file.Size
 				progressInfo.SkippedFiles++
@@ -348,20 +341,13 @@ func walkDirectoryFn(
 
 			utils.Trace.Printf("%s has changed, updating", shortPath)
 			addToDeletedFiles(&archive)
+		}
 
-			err := archiveFile(&archive)
+		err = archiveFile(&archive, exists)
 
-			if err != nil {
-				utils.Error.Printf("failed archiving %s: %s", shortPath, err)
-				return nil
-			}
-		} else {
-			err := archiveFile(&archive)
-
-			if err != nil {
-				utils.Error.Printf("failed archiving %s: %s", shortPath, err)
-				return nil
-			}
+		if err != nil {
+			utils.Error.Printf("failed archiving %s: %s", shortPath, err)
+			return nil
 		}
 
 		progressInfo.ProcessedFiles++
