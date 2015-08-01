@@ -92,7 +92,7 @@ After the `index.json.gz.bin` is read, these are the commands that are used to r
 each file:
 
 1. For each chunk of each file a specific GnuPG command is generated:  
-   `echo <password>| gpg2 --batch --decrypt --passphrase-fd 0 --quiet --output <decrypted_chunk> <encrypted_chunk>`
+   `gpg2 --batch --decrypt --passphrase-file <file> --quiet --output <decrypted_chunk> <encrypted_chunk>`
 1. On Windows, decrypted chunks are concatenated with the `copy` command:  
    `copy /B /Y <chunk_1>+<chunk_2>+...+<chunk_n> <original_filename>`
 1. Modification times are restored with `touch`.
