@@ -383,14 +383,17 @@ func printProgress(
 	progressInfo *ProgressInfo,
 	lastTickDuration time.Duration,
 	lastTickData uint64,
+	lastTickFiles uint64,
 	totalDuration time.Duration,
 ) {
 
 	processedDataFormatted := utils.FormatFileSize(progressInfo.ProcessedData)
 	skippedDataFormatted := utils.FormatFileSize(progressInfo.SkippedData)
 
-	speed := lastTickData / uint64(lastTickDuration.Seconds())
-	speedFormatted := utils.FormatFileSize(speed) + "/s"
+	transferRate := lastTickData / uint64(lastTickDuration.Seconds())
+	transferRateFormatted := utils.FormatFileSize(transferRate) + "/s"
+
+	fileRate := lastTickFiles / uint64(lastTickDuration.Seconds())
 
 	utils.Info.Printf(`Archive process started %s ago.
 Processed files: %d
@@ -398,7 +401,8 @@ Processed data:  %s
 Skipped files:   %d
 Skipped data:    %s
 Current file:    %s
-Current speed:   %s
+Transfer rate:   %s
+File rate:       %d files/s
 
 `,
 		totalDuration,
@@ -407,13 +411,15 @@ Current speed:   %s
 		progressInfo.SkippedFiles,
 		skippedDataFormatted,
 		progressInfo.CurrentFile,
-		speedFormatted,
+		transferRateFormatted,
+		fileRate,
 	)
 }
 
 func startProgressUpdater(progressInfo *ProgressInfo, done chan bool) {
 	go func() {
 		lastTotalProcessedData := progressInfo.ProcessedData
+		lastTotalProcessedFiles := progressInfo.ProcessedFiles
 		lastTick := time.Now()
 		start := time.Now()
 		ticker := time.NewTicker(progressUpdateInterval)
@@ -429,6 +435,9 @@ func startProgressUpdater(progressInfo *ProgressInfo, done chan bool) {
 				lastTickData := progressInfo.ProcessedData - lastTotalProcessedData
 				lastTotalProcessedData = progressInfo.ProcessedData
 
+				lastTickFiles := progressInfo.ProcessedFiles - lastTotalProcessedFiles
+				lastTotalProcessedFiles = progressInfo.ProcessedFiles
+
 				totalDuration := now.Sub(start)
 				totalDuration = time.Duration(totalDuration.Seconds()) * time.Second
 
@@ -436,6 +445,7 @@ func startProgressUpdater(progressInfo *ProgressInfo, done chan bool) {
 					progressInfo,
 					lastTickDuration,
 					lastTickData,
+					lastTickFiles,
 					totalDuration,
 				)
 
