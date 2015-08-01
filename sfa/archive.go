@@ -58,7 +58,19 @@ func addToDeletedFiles(archive *ArchiveInfo) {
 	}
 }
 
+func archiveDirectory(archive *ArchiveInfo) {
+	archive.File.Chunks = []models.Chunk{}
+	archive.File.IsDirectory = true
+	archive.File.ModificationTime = models.JSONTime{Time: archive.FileInfo.ModTime()}
+
+	archive.Document.Files[archive.ShortPath] = archive.File
+}
+
 func archiveFile(archive *ArchiveInfo) error {
+	if archive.FileInfo.IsDir() {
+		utils.Error.Panicln("directory passed to archiveFile")
+	}
+
 	chunks, err := createAndGetChunks(archive)
 
 	if err != nil {
@@ -69,10 +81,6 @@ func archiveFile(archive *ArchiveInfo) error {
 		Size:             archive.FileSize,
 		ModificationTime: models.JSONTime{Time: archive.FileInfo.ModTime()},
 		Chunks:           chunks,
-	}
-
-	if archive.FileInfo.IsDir() {
-		file.IsDirectory = true
 	}
 
 	archive.Document.Files[archive.ShortPath] = file
@@ -281,6 +289,7 @@ func walkDirectoryFn(
 		}
 
 		progressInfo.CurrentFile = shortPath
+		delete(removedPaths, shortPath)
 
 		file, exists := doc.Files[shortPath]
 
@@ -295,10 +304,13 @@ func walkDirectoryFn(
 			ShortPath: shortPath,
 		}
 
-		if exists {
-			delete(removedPaths, shortPath)
+		// Fast path for directories as they do not need chunks.
+		if fileInfo.IsDir() {
+			archiveDirectory(&archive)
+			return nil
+		}
 
-			// Fast path for directories.
+		if exists {
 			if fileInfo.IsDir() {
 				file.ModificationTime = models.JSONTime{Time: fileInfo.ModTime()}
 				doc.Files[shortPath] = file
@@ -330,10 +342,7 @@ func walkDirectoryFn(
 		}
 
 		progressInfo.ProcessedFiles++
-
-		if !fileInfo.IsDir() {
-			progressInfo.ProcessedData += archive.FileSize
-		}
+		progressInfo.ProcessedData += archive.FileSize
 
 		select {
 		case <-save:
