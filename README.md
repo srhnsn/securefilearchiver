@@ -57,6 +57,42 @@ This will install the `sfa` binary to [`$GOPATH/bin`](https://golang.org/doc/cod
         --prune=PRUNE  Prune deleted files older than a specific time range.
         --gc           Remove unused chunks.
 
+### Examples
+
+#### Archiving
+
+    sfa --noindexenc --noindexzip --password "test" -v archive --exclude-file test/exclude.txt . archive
+
+1. `--noindexenc`: Do not encrypt the index file (useful for debugging).
+1. `--noindexzip`: Do not compress the index file (useful for debugging).
+1. `--password "test"`: Use the specified password.
+1. `-v`: Verbose output.
+1. `archive`: Use the `archive` command.
+1. `--exclude-file test/exclude.txt`: Do not archive the specified [globs](https://en.wikipedia.org/wiki/Glob_(programming)) in this file.
+1. `.` Archive the contents of the current directory.
+1. `archive`: Store the archived files in the `archive` directory in the current directory.
+
+#### Restoring
+
+    sfa --password "test" -v restore archive output
+
+1. `--password "test"`: Use the specified password.
+1. `-v`: Verbose output.
+1. `restore`: Use the `restore` command.
+1. `archive`: Restore the files from the archive in the `archive` directory in the current directory.
+1. `output`: Create a restoration batch file in the `output` directory in the current directory.
+
+#### Maintenance
+
+    sfa --password "test" -v index --prune 1d --gc archive
+
+1. `--password "test"`: Use the specified password.
+1. `-v`: Verbose output.
+1. `index`: Use the `index` command.
+1. `--prune 1d`: Remove (prune) files from the index that were marked as deleted more than a day ago.
+1. `--gc`: Create a batch file for permanently removing chunk files that are used for neither existing nor deleted files in the index.
+1. `archive`: Use the archive in the `archive` directory.
+
 # Technical overview
 
 ## Archiving files
