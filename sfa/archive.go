@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	indexSaveInterval      = 1 * time.Minute
+	indexSaveInterval      = 2 * time.Minute
 	progressUpdateInterval = 5 * time.Second
 )
 
