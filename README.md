@@ -41,6 +41,8 @@ This will install the `sfa` binary to [`$GOPATH/bin`](https://golang.org/doc/cod
       archive [<flags>] <source> <destination>
         Archive files.
 
+        --exclude-file=EXCLUDE-FILE
+                           Never archive paths that match the globs in this file.
         --follow-symlinks  Follow and archive symbolic links. They are ignored
                            otherwise.
 

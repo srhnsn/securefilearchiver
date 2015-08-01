@@ -265,6 +265,19 @@ func walkDirectoryFn(
 
 	inputDirLength := len(inputDir) + 1
 
+	var excludes utils.Globfile
+	var err error
+
+	if len(*archiveExcludes) != 0 {
+		excludes, err = utils.NewGlobfile(*archiveExcludes)
+
+		if err != nil {
+			utils.Error.Panicln(err)
+		}
+
+		utils.Trace.Printf("using exclude file %s (%d globs)", *archiveExcludes, excludes.Len())
+	}
+
 	return func(fullPath string, fileInfo os.FileInfo, err error) error {
 		fullPath = utils.FixSlashes(fullPath)
 
@@ -286,6 +299,16 @@ func walkDirectoryFn(
 
 		if len(fullPath) >= inputDirLength {
 			shortPath = fullPath[inputDirLength:]
+		}
+
+		if excludes.Matches(shortPath) {
+			utils.Trace.Printf("skipping %s because path is in exclude file", shortPath)
+
+			if fileInfo.IsDir() {
+				return filepath.SkipDir
+			}
+
+			return nil
 		}
 
 		progressInfo.CurrentFile = shortPath
