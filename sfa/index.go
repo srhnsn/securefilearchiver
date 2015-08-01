@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	currentIndexVersion     = 1
 	databaseFilename        = "index.json"
 	unusedChunksDeleteBatch = "delete unused chunks.bat"
 )
@@ -131,6 +132,7 @@ func getNewDocument() *models.Document {
 	keyUnencrypted := utils.GetNewDocumentKey()
 
 	return &models.Document{
+		Version:        currentIndexVersion,
 		KeyUnencrypted: keyUnencrypted,
 		Files:          map[string]models.File{},
 		DeletedFiles:   map[string][]models.File{},

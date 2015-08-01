@@ -6,6 +6,7 @@ import (
 
 // Document represents the index which stores all metadata about the archived files.
 type Document struct {
+	Version        uint8             `json:"version"`
 	KeyEncrypted   string            `json:"key"`
 	KeyUnencrypted string            `json:"-"`
 	Files          map[string]File   `json:"files"`
