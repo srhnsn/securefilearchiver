@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -114,6 +115,13 @@ func GetDecryptCommand(inputFile string, outputFile string, passwordFile string)
 		outputFile,
 		inputFile,
 	)
+}
+
+// GetHashSum returns the hash sum for data using the preferred algorithm
+// (currently SHA-256).
+func GetHashSum(data []byte) string {
+	hash := sha256.Sum256(data)
+	return hex.EncodeToString(hash[:])
 }
 
 // GetNewDocumentKey returns 32 random bytes, encoded as a 64 byte hex string.

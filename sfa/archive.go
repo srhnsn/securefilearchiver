@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
 	"io"
 	"os"
 	"path/filepath"
@@ -125,8 +123,7 @@ func createAndGetChunks(archive *ArchiveInfo) ([]models.Chunk, error) {
 			data = data[:n]
 		}
 
-		hash := sha1.Sum(data)
-		name := hex.EncodeToString(hash[:])
+		name := utils.GetHashSum(data)
 
 		if !chunkExists(name, archive) {
 			ciphertext := utils.EncryptData(data, archive.Document.KeyUnencrypted)
