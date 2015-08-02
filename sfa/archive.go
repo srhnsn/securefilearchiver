@@ -106,7 +106,12 @@ func createAndGetChunks(archive *ArchiveInfo) ([]models.Chunk, error) {
 	var chunks []models.Chunk
 	chunkSize := getChunkSize(archive.FileSize)
 
+	chunkNo := 0
+
+	utils.Trace.Printf("writing chunks for %s\n", archive.ShortPath)
+
 	for {
+		chunkNo++
 		data := make([]byte, chunkSize)
 
 		n, err := file.Read(data)
@@ -124,11 +129,15 @@ func createAndGetChunks(archive *ArchiveInfo) ([]models.Chunk, error) {
 		}
 
 		name := utils.GetHashSum(data)
+		chunkFilename := name + EncSuffix
 
-		if !chunkExists(name, archive) {
+		if chunkExists(name, archive) {
+			utils.Trace.Printf("chunk #%d (%s) seems to already exist\n", chunkNo, chunkFilename)
+		} else {
+			utils.Trace.Printf("writing chunk #%d (%s)\n", chunkNo, chunkFilename)
 			ciphertext := utils.EncryptData(data, archive.Document.KeyUnencrypted)
 
-			saveFile(archive.OutputDir, name+EncSuffix, ciphertext)
+			saveFile(archive.OutputDir, chunkFilename, ciphertext)
 		}
 
 		chunks = append(chunks, models.Chunk{
