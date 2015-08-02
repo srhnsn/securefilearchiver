@@ -137,7 +137,7 @@ func createAndGetChunks(archive *ArchiveInfo) ([]models.Chunk, error) {
 			utils.Trace.Printf("writing chunk #%d (%s)\n", chunkNo, chunkFilename)
 			ciphertext := utils.EncryptData(data, archive.Document.KeyUnencrypted)
 
-			saveFile(archive.OutputDir, chunkFilename, ciphertext)
+			saveChunk(archive.OutputDir, chunkFilename, ciphertext)
 		}
 
 		chunks = append(chunks, models.Chunk{
@@ -209,7 +209,7 @@ func normalizePath(path string) string {
 	return path
 }
 
-func saveFile(outputDir string, filename string, data []byte) {
+func saveChunk(outputDir string, filename string, data []byte) {
 	destDir := filepath.Join(outputDir, filename[0:2], filename[0:4])
 	destPath := filepath.Join(destDir, filename)
 
