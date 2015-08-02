@@ -60,7 +60,7 @@ func garbageCollect(inputDir string) {
 		utils.Error.Panicln(err)
 	}
 
-	utils.Trace.Println("checking for unused chunks")
+	utils.Info.Println("checking for unused chunks")
 	chunkIndex := getChunkIndexMap(doc)
 	unusedChunks := getUnusedChunks(chunkIndex, inputDir)
 	createUnusedChunksDeleteBatch(unusedChunks, inputDir)
@@ -237,14 +237,13 @@ func pruneFiles(inputDir string, pruneRangeStr string) {
 		}
 	}
 
-	utils.Trace.Printf("pruned %d files\n", prunedFiles)
+	utils.Info.Printf("pruned %d files\n", prunedFiles)
 
-	utils.Trace.Println("writing to index")
 	saveIndex(getIndexFilename(inputDir), doc)
 }
 
 func readIndex(filename string) (*models.Document, error) {
-	utils.Trace.Println("reading index")
+	utils.Info.Println("reading index")
 
 	if !utils.FileExists(filename) {
 		utils.Info.Printf("no index found at %s, creating new archive\n", filename)
@@ -274,6 +273,8 @@ func readIndex(filename string) (*models.Document, error) {
 }
 
 func saveIndex(filename string, doc *models.Document) {
+	utils.Info.Println("writing to index")
+
 	encryptIndexKey(doc, getPassword())
 	data, err := json.MarshalIndent(doc, "", "\t")
 
@@ -292,7 +293,7 @@ func saveIndex(filename string, doc *models.Document) {
 	tempFilename := filename + utils.TmpSuffix
 	utils.MustWriteFile(tempFilename, data)
 
-	utils.Trace.Println("validating index")
+	utils.Info.Println("validating index")
 	err = validateIndex(tempFilename, doc)
 
 	if err != nil {

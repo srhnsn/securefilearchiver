@@ -224,15 +224,14 @@ func walkDirectory(inputDir string, outputDir string) {
 	startProgressUpdater(&progressInfo, done)
 	walkFn := walkDirectoryFn(inputDir, outputDir, doc, removedPaths, &progressInfo, saveTicker.C)
 
-	utils.Trace.Println("checking for changed files")
+	utils.Info.Println("checking for changed files")
 	filepath.Walk(inputDir, walkFn)
 	done <- true
 	saveTicker.Stop()
 
-	utils.Trace.Println("checking for deleted files")
+	utils.Info.Println("checking for deleted files")
 	markRemovedPaths(removedPaths, doc)
 
-	utils.Trace.Println("writing to index")
 	saveIndex(getIndexFilename(outputDir), doc)
 }
 
@@ -257,14 +256,14 @@ func walkDirectoryFn(
 			utils.Error.Panicln(err)
 		}
 
-		utils.Trace.Printf("using exclude file %s (%d globs)", *archiveExcludes, excludes.Len())
+		utils.Info.Printf("using exclude file %s (%d globs)", *archiveExcludes, excludes.Len())
 	}
 
 	return func(fullPath string, fileInfo os.FileInfo, err error) error {
 		fullPath = utils.FixSlashes(fullPath)
 
 		if err != nil {
-			utils.Error.Printf("error while walking %s", fullPath)
+			utils.Error.Printf("error while walking %s: %s", fullPath, err)
 			return nil
 		}
 
@@ -317,19 +316,22 @@ func walkDirectoryFn(
 
 		if exists {
 			if !fileHasChanged(&archive) {
+				utils.Trace.Printf("skipping unchanged file %s", shortPath)
 				progressInfo.SkippedData += file.Size
 				progressInfo.SkippedFiles++
 				return nil
 			}
 
-			utils.Trace.Printf("%s has changed, updating", shortPath)
+			utils.Trace.Printf("updating changed file %s", shortPath)
 			addToDeletedFiles(&archive)
+		} else {
+			utils.Trace.Printf("adding new file %s", shortPath)
 		}
 
 		err = archiveFile(&archive, exists)
 
 		if err != nil {
-			utils.Error.Printf("failed archiving %s: %s", shortPath, err)
+			utils.Error.Println(err)
 			return nil
 		}
 
