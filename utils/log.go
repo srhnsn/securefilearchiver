@@ -5,10 +5,13 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+	"time"
 )
 
 const (
-	logParams = log.Ldate | log.Ltime | log.Lshortfile
+	logFilenameFormat = "2006-01-02 150405"
+	logParams         = log.Ldate | log.Ltime | log.Lshortfile
 )
 
 var (
@@ -46,7 +49,7 @@ func init() {
 }
 
 // InitLogger initializes the logging configuration.
-func InitLogger(logFilename string, quiet bool, verbose bool) {
+func InitLogger(logDirectory string, quiet bool, verbose bool) {
 	config := DefaultLoggerConfig
 
 	if verbose {
@@ -59,8 +62,9 @@ func InitLogger(logFilename string, quiet bool, verbose bool) {
 		config.Warning = []io.Writer{ioutil.Discard}
 	}
 
-	if len(logFilename) != 0 {
-		logFile, err := os.OpenFile(logFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	if len(logDirectory) != 0 {
+		logFilename := getNewLogFilename(logDirectory)
+		logFile, err := os.OpenFile(logFilename, os.O_CREATE|os.O_WRONLY, 0600)
 
 		if err != nil {
 			panic(err)
@@ -98,4 +102,9 @@ func applyLoggerConfig(config LoggerConfig) {
 	Info = log.New(io.MultiWriter(config.Info...), "INFO:    ", logParams)
 	Warning = log.New(io.MultiWriter(config.Warning...), "WARNING: ", logParams)
 	Error = log.New(io.MultiWriter(config.Error...), "ERROR:   ", logParams)
+}
+
+func getNewLogFilename(logDirectory string) string {
+	filename := time.Now().Format(logFilenameFormat) + " secure file archiver session"
+	return filepath.Join(logDirectory, filename) + ".log"
 }

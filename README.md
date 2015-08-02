@@ -34,7 +34,7 @@ This will install the `sfa` binary to [`$GOPATH/bin`](https://golang.org/doc/cod
       --noindexzip         Do not compress index file.
       --quiet              Only print errors to console.
       --verbose            Verbose output.
-      --log=LOG            Log output to file.
+      --log=LOG            Log output to a file in this directory.
 
     Commands:
       help [<command>...]
