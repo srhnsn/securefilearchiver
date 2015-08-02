@@ -128,11 +128,7 @@ func createAndGetChunks(archive *ArchiveInfo) ([]models.Chunk, error) {
 		if !chunkExists(name, archive) {
 			ciphertext := utils.EncryptData(data, archive.Document.KeyUnencrypted)
 
-			err = saveFile(archive.OutputDir, name+EncSuffix, ciphertext)
-
-			if err != nil {
-				return nil, err
-			}
+			saveFile(archive.OutputDir, name+EncSuffix, ciphertext)
 		}
 
 		chunks = append(chunks, models.Chunk{
@@ -204,22 +200,12 @@ func normalizePath(path string) string {
 	return path
 }
 
-func saveFile(outputDir string, filename string, data []byte) error {
+func saveFile(outputDir string, filename string, data []byte) {
 	destDir := filepath.Join(outputDir, filename[0:2], filename[0:4])
 	destPath := filepath.Join(destDir, filename)
 
-	tmpPath := destPath + TmpSuffix
-
 	os.MkdirAll(destDir, 0700)
-	utils.MustWriteFile(tmpPath, data)
-
-	err := os.Rename(tmpPath, destPath)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	utils.MustWriteFileAtomic(destPath, data)
 }
 
 func walkDirectory(inputDir string, outputDir string) {

@@ -289,7 +289,7 @@ func saveIndex(filename string, doc *models.Document) {
 		data = utils.EncryptData(data, getPassword())
 	}
 
-	tempFilename := filename + TmpSuffix
+	tempFilename := filename + utils.TmpSuffix
 	utils.MustWriteFile(tempFilename, data)
 
 	utils.Trace.Println("validating index")
@@ -307,9 +307,9 @@ func saveIndex(filename string, doc *models.Document) {
 }
 
 func unpackIndex(data []byte, filename string) []byte {
-	if strings.HasSuffix(filename, TmpSuffix) {
+	if strings.HasSuffix(filename, utils.TmpSuffix) {
 		// Strip TmpSuffix
-		filename = filename[:len(filename)-len(TmpSuffix)]
+		filename = filename[:len(filename)-len(utils.TmpSuffix)]
 	}
 
 	if strings.HasSuffix(filename, EncSuffix) {

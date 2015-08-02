@@ -11,8 +11,6 @@ import (
 const (
 	// EncSuffix is the suffix for all encrypted (binary) files.
 	EncSuffix = ".bin"
-	// TmpSuffix is the suffix for all temporary files.
-	TmpSuffix = ".tmp"
 	// ZipSuffix is the suffix for all compressed files.
 	ZipSuffix = ".gz"
 )

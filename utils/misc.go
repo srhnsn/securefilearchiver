@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+const (
+	// TmpSuffix is the suffix for all temporary files.
+	TmpSuffix = ".tmp"
+)
+
 var (
 	humanRangePattern = regexp.MustCompile("(\\d+)([sihdwmy])")
 
@@ -59,6 +64,18 @@ func FormatFileSize(bytes uint64) string {
 // MustWriteFile writes data to filename. It panics if there is an error.
 func MustWriteFile(filename string, data []byte) {
 	err := ioutil.WriteFile(filename, data, 0700)
+
+	if err != nil {
+		Error.Panicln(err)
+	}
+}
+
+// MustWriteFileAtomic first writes the data to a temporary file, then renames it.
+func MustWriteFileAtomic(filename string, data []byte) {
+	tmpFilename := filename + TmpSuffix
+
+	MustWriteFile(tmpFilename, data)
+	err := os.Rename(tmpFilename, filename)
 
 	if err != nil {
 		Error.Panicln(err)
