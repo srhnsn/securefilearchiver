@@ -17,10 +17,12 @@ const (
 
 var (
 	app        = kingpin.New("sfa", "A secure file archiver.")
-	verbose    = app.Flag("verbose", "Verbose output.").Short('v').Bool()
+	password   = app.Flag("password", "Password to use for encryption and decryption of index file.").String()
 	noIndexEnc = app.Flag("noindexenc", "Do not encrypt index file.").Bool()
 	noIndexZip = app.Flag("noindexzip", "Do not compress index file.").Bool()
-	password   = app.Flag("password", "Password to use for encryption and decryption.").String()
+	quiet      = app.Flag("quiet", "Only print errors to console.").Bool()
+	verbose    = app.Flag("verbose", "Verbose output.").Bool()
+	logfile    = app.Flag("log", "Log output to file.").String()
 
 	archive          = app.Command("archive", "Archive files.")
 	archiveInputDir  = archive.Arg("source", "Source directory.").Required().String()
@@ -42,7 +44,7 @@ var (
 func main() {
 	cmd := kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	utils.SetVerboseLogging(*verbose)
+	utils.InitLogger(*logfile, *quiet, *verbose)
 
 	switch cmd {
 	case archive.FullCommand():

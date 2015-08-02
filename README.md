@@ -28,10 +28,13 @@ This will install the `sfa` binary to [`$GOPATH/bin`](https://golang.org/doc/cod
 
     Flags:
       --help               Show help (also see --help-long and --help-man).
-      -v, --verbose        Verbose output.
+      --password=PASSWORD  Password to use for encryption and decryption of index
+                           file.
       --noindexenc         Do not encrypt index file.
       --noindexzip         Do not compress index file.
-      --password=PASSWORD  Password to use for encryption and decryption.
+      --quiet              Only print errors to console.
+      --verbose            Verbose output.
+      --log=LOG            Log output to file.
 
     Commands:
       help [<command>...]
@@ -61,12 +64,12 @@ This will install the `sfa` binary to [`$GOPATH/bin`](https://golang.org/doc/cod
 
 #### Archiving
 
-    sfa --noindexenc --noindexzip --password "test" -v archive --exclude-file test/exclude.txt . archive
+    sfa --noindexenc --noindexzip --password "test" --verbose archive --exclude-file test/exclude.txt . archive
 
 1. `--noindexenc`: Do not encrypt the index file (useful for debugging).
 1. `--noindexzip`: Do not compress the index file (useful for debugging).
 1. `--password "test"`: Use the specified password.
-1. `-v`: Verbose output.
+1. `--verbose`: Verbose output.
 1. `archive`: Use the `archive` command.
 1. `--exclude-file test/exclude.txt`: Do not archive the specified [globs](https://en.wikipedia.org/wiki/Glob_(programming)) in this file.
 1. `.` Archive the contents of the current directory.
@@ -77,7 +80,7 @@ This will install the `sfa` binary to [`$GOPATH/bin`](https://golang.org/doc/cod
     sfa --password "test" -v restore archive output
 
 1. `--password "test"`: Use the specified password.
-1. `-v`: Verbose output.
+1. `--verbose`: Verbose output.
 1. `restore`: Use the `restore` command.
 1. `archive`: Restore the files from the archive in the `archive` directory in the current directory.
 1. `output`: Create a restoration batch file in the `output` directory in the current directory.
@@ -87,7 +90,7 @@ This will install the `sfa` binary to [`$GOPATH/bin`](https://golang.org/doc/cod
     sfa --password "test" -v index --prune 1d --gc archive
 
 1. `--password "test"`: Use the specified password.
-1. `-v`: Verbose output.
+1. `--verbose`: Verbose output.
 1. `index`: Use the `index` command.
 1. `--prune 1d`: Remove (prune) files from the index that were marked as deleted more than a day ago.
 1. `--gc`: Create a batch file for permanently removing chunk files that are used for neither existing nor deleted files in the index.
