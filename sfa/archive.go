@@ -211,7 +211,10 @@ func saveChunk(outputDir string, filename string, data []byte) {
 	destDir := filepath.Join(outputDir, filename[0:2], filename[0:4])
 	destPath := filepath.Join(destDir, filename)
 
-	os.MkdirAll(destDir, 0700)
+	err := os.MkdirAll(destDir, 0700)
+
+	utils.PanicIfErr(err)
+
 	utils.MustWriteFileAtomic(destPath, data)
 }
 
@@ -230,7 +233,10 @@ func walkDirectory(inputDir string, outputDir string) {
 	walkFn := walkDirectoryFn(inputDir, outputDir, doc, removedPaths, &progressInfo, saveTicker.C)
 
 	utils.Info.Println("checking for changed files")
-	filepath.Walk(inputDir, walkFn)
+	err = filepath.Walk(inputDir, walkFn)
+
+	utils.PanicIfErr(err)
+
 	done <- true
 	saveTicker.Stop()
 
@@ -313,7 +319,8 @@ func walkDirectoryFn(
 
 		// Fast path for directories as they do not need chunks and snapshots.
 		if fileInfo.IsDir() {
-			archiveFile(&archive, exists)
+			err := archiveFile(&archive, exists)
+			utils.PanicIfErr(err)
 			return nil
 		}
 

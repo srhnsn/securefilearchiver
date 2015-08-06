@@ -69,11 +69,13 @@ func EncryptData(input []byte, password string) []byte {
 	var output bytes.Buffer
 
 	cryptoWriter, err := openpgp.SymmetricallyEncrypt(&output, []byte(password), nil, encryptionConfig)
-
 	PanicIfErr(err)
 
-	cryptoWriter.Write(input)
-	cryptoWriter.Close()
+	_, err = cryptoWriter.Write(input)
+	PanicIfErr(err)
+
+	err = cryptoWriter.Close()
+	PanicIfErr(err)
 
 	return output.Bytes()
 }
@@ -85,11 +87,13 @@ func EncryptDataArmored(input []byte, password string) []byte {
 	encryptedInput := EncryptData(input, password)
 
 	armorWriter, err := armor.Encode(&output, "PGP MESSAGE", nil)
-
 	PanicIfErr(err)
 
-	armorWriter.Write(encryptedInput)
-	armorWriter.Close()
+	_, err = armorWriter.Write(encryptedInput)
+	PanicIfErr(err)
+
+	err = armorWriter.Close()
+	PanicIfErr(err)
 
 	return output.Bytes()
 }

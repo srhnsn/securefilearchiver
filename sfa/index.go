@@ -174,7 +174,8 @@ func getUnusedChunks(chunkIndex chunkIndexMap, directory string) []string {
 		return nil
 	}
 
-	filepath.Walk(directory, walkFn)
+	err := filepath.Walk(directory, walkFn)
+	utils.PanicIfErr(err)
 
 	return unusedChunks
 }
