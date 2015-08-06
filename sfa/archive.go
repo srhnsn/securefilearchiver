@@ -199,9 +199,7 @@ func markRemovedPaths(removedPaths map[string]bool, doc *models.Document) {
 func normalizePath(path string) string {
 	path, err := filepath.Abs(path)
 
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.PanicIfErr(err)
 
 	path = filepath.Clean(path)
 	path = utils.FixSlashes(path)
@@ -220,9 +218,7 @@ func saveChunk(outputDir string, filename string, data []byte) {
 func walkDirectory(inputDir string, outputDir string) {
 	doc, err := readIndex(getExistingIndexFilename(outputDir))
 
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.PanicIfErr(err)
 
 	utils.Trace.Println("creating removed paths map")
 	removedPaths := getRemovedPathsMap(doc)
@@ -261,9 +257,7 @@ func walkDirectoryFn(
 	if len(*archiveExcludes) != 0 {
 		excludes, err = utils.NewGlobfile(*archiveExcludes)
 
-		if err != nil {
-			utils.Error.Panicln(err)
-		}
+		utils.PanicIfErr(err)
 
 		utils.Info.Printf("using exclude file %s (%d globs)", *archiveExcludes, excludes.Len())
 	}

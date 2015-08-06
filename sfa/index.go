@@ -56,9 +56,7 @@ func encryptIndexKey(doc *models.Document, password string) {
 func garbageCollect(inputDir string) {
 	doc, err := readIndex(getExistingIndexFilename(inputDir))
 
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.PanicIfErr(err)
 
 	utils.Info.Println("checking for unused chunks")
 	chunkIndex := getChunkIndexMap(doc)
@@ -169,9 +167,7 @@ func getUnusedChunks(chunkIndex chunkIndexMap, directory string) []string {
 
 		relativePath, err := filepath.Rel(directory, fullPath)
 
-		if err != nil {
-			utils.Error.Panicln(err)
-		}
+		utils.PanicIfErr(err)
 
 		unusedChunks = append(unusedChunks, relativePath)
 
@@ -196,15 +192,11 @@ func getRemovedPathsMap(doc *models.Document) removedPathsMap {
 func pruneFiles(inputDir string, pruneRangeStr string) {
 	doc, err := readIndex(getExistingIndexFilename(inputDir))
 
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.PanicIfErr(err)
 
 	pruneRange, err := utils.ParseHumanRange(pruneRangeStr)
 
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.PanicIfErr(err)
 
 	pruneThreshold := time.Now().Add(-pruneRange)
 
@@ -278,9 +270,7 @@ func saveIndex(filename string, doc *models.Document) {
 	encryptIndexKey(doc, getPassword())
 	data, err := json.MarshalIndent(doc, "", "\t")
 
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.PanicIfErr(err)
 
 	if !*noIndexZip {
 		data = utils.CompressData(data)
@@ -296,15 +286,11 @@ func saveIndex(filename string, doc *models.Document) {
 	utils.Info.Println("validating index")
 	err = validateIndex(tempFilename, doc)
 
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.PanicIfErr(err)
 
 	err = os.Rename(tempFilename, filename)
 
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.PanicIfErr(err)
 }
 
 func unpackIndex(data []byte, filename string) []byte {

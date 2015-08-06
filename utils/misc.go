@@ -65,9 +65,7 @@ func FormatFileSize(bytes uint64) string {
 func MustWriteFile(filename string, data []byte) {
 	err := ioutil.WriteFile(filename, data, 0700)
 
-	if err != nil {
-		Error.Panicln(err)
-	}
+	PanicIfErr(err)
 }
 
 // MustWriteFileAtomic first writes the data to a temporary file, then renames it.
@@ -77,9 +75,16 @@ func MustWriteFileAtomic(filename string, data []byte) {
 	MustWriteFile(tmpFilename, data)
 	err := os.Rename(tmpFilename, filename)
 
-	if err != nil {
-		Error.Panicln(err)
+	PanicIfErr(err)
+}
+
+// PanicIfErr panics if the argument is not nil.
+func PanicIfErr(err error) {
+	if err == nil {
+		return
 	}
+
+	Error.Panicln(err)
 }
 
 // ParseHumanRange parses human time ranges into time.Durations.
@@ -95,9 +100,7 @@ func ParseHumanRange(input string) (time.Duration, error) {
 	for _, token := range match {
 		amount, err := strconv.ParseInt(token[1], 10, 64)
 
-		if err != nil {
-			Error.Panicln(err)
-		}
+		PanicIfErr(err)
 
 		duration = time.Duration(amount) * parseSingleHumanRange(token[2])
 	}

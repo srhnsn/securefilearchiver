@@ -12,9 +12,7 @@ func CompressData(data []byte) []byte {
 
 	writer, err := gzip.NewWriterLevel(&output, gzip.BestCompression)
 
-	if err != nil {
-		Error.Panicln(err)
-	}
+	PanicIfErr(err)
 
 	writer.Write(data)
 	writer.Close()
@@ -27,15 +25,11 @@ func UncompressData(data []byte) []byte {
 	inputRaw := bytes.NewBuffer(data)
 	inputZip, err := gzip.NewReader(inputRaw)
 
-	if err != nil {
-		Error.Panicln(err)
-	}
+	PanicIfErr(err)
 
 	output, err := ioutil.ReadAll(inputZip)
 
-	if err != nil {
-		Error.Panicln(err)
-	}
+	PanicIfErr(err)
 
 	inputZip.Close()
 	return output

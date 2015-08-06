@@ -86,9 +86,7 @@ func getRestorePathsCommands(inputDir string, outputDir string, doc *models.Docu
 func restoreFiles(inputDir string, outputDir string) {
 	doc, err := readIndex(getExistingIndexFilename(inputDir))
 
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.PanicIfErr(err)
 
 	if len(*restorePattern) != 0 {
 		utils.Info.Printf("using restore pattern %s", *restorePattern)
@@ -113,9 +111,7 @@ func restoreFiles(inputDir string, outputDir string) {
 	out = append(out, "pause")
 	err = os.MkdirAll(outputDir, 0700)
 
-	if err != nil {
-		utils.Error.Panicln(err)
-	}
+	utils.PanicIfErr(err)
 
 	data := []byte(strings.Join(out, "\r\n"))
 	utils.MustWriteFile(filepath.Join(outputDir, outputScriptfile), data)

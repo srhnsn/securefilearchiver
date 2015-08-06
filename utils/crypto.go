@@ -40,15 +40,11 @@ func DecryptData(input []byte, password string) []byte {
 		return []byte(password), nil
 	}, nil)
 
-	if err != nil {
-		Error.Panicln(err)
-	}
+	PanicIfErr(err)
 
 	output, err := ioutil.ReadAll(md.UnverifiedBody)
 
-	if err != nil {
-		Error.Panicln(err)
-	}
+	PanicIfErr(err)
 
 	return output
 }
@@ -58,16 +54,12 @@ func DecryptDataArmored(input []byte, password string) []byte {
 	inputReader := bytes.NewReader(input)
 	block, err := armor.Decode(inputReader)
 
-	if err != nil {
-		Error.Panicln(err)
-	}
+	PanicIfErr(err)
 
 	armorReader := block.Body
 	unarmoredInput, err := ioutil.ReadAll(armorReader)
 
-	if err != nil {
-		Error.Panicln(err)
-	}
+	PanicIfErr(err)
 
 	return DecryptData(unarmoredInput, password)
 }
@@ -78,9 +70,7 @@ func EncryptData(input []byte, password string) []byte {
 
 	cryptoWriter, err := openpgp.SymmetricallyEncrypt(&output, []byte(password), nil, encryptionConfig)
 
-	if err != nil {
-		Error.Panicln(err)
-	}
+	PanicIfErr(err)
 
 	cryptoWriter.Write(input)
 	cryptoWriter.Close()
@@ -96,9 +86,7 @@ func EncryptDataArmored(input []byte, password string) []byte {
 
 	armorWriter, err := armor.Encode(&output, "PGP MESSAGE", nil)
 
-	if err != nil {
-		Error.Panicln(err)
-	}
+	PanicIfErr(err)
 
 	armorWriter.Write(encryptedInput)
 	armorWriter.Close()
@@ -133,9 +121,7 @@ func getRandomHexBytes(length int) string {
 	data := make([]byte, length)
 	_, err := io.ReadFull(rand.Reader, data)
 
-	if err != nil {
-		Error.Panicln(err)
-	}
+	PanicIfErr(err)
 
 	return hex.EncodeToString(data)
 }
